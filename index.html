@@ -18,7 +18,7 @@
     <!-- Učitavanje Babel-a -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     
-    <!-- FIX: Učitavanje Prop-types (neophodno za Recharts UMD) -->
+    <!-- FIX: Učitavanje Prop-types -->
     <script src="https://unpkg.com/prop-types/prop-types.min.js"></script>
     
     <!-- FIX: Korišćenje stabilne verzije Recharts-a -->
@@ -31,6 +31,43 @@
         body { font-family: 'Rubik', sans-serif; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        strong, .font-bold, .font-black { letter-spacing: 0.025em; } 
+        
+        /* Modern Date Picker Styling */
+        input[type="date"] {
+            appearance: none;
+            -webkit-appearance: none;
+            color: #334155;
+            font-family: 'Rubik', sans-serif;
+            font-weight: 600;
+            background-color: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 0.75rem;
+            padding: 0.5rem 0.75rem;
+            outline: none;
+            transition: all 0.2s;
+            font-size: 0.8rem;
+            cursor: pointer;
+        }
+        input[type="date"]:hover {
+            background-color: #f1f5f9;
+            border-color: #cbd5e1;
+        }
+        input[type="date"]:focus {
+            border-color: #d13334;
+            box-shadow: 0 0 0 3px rgba(209, 51, 52, 0.1);
+            background-color: #fff;
+        }
+        ::-webkit-calendar-picker-indicator {
+            cursor: pointer;
+            opacity: 0.5;
+            transition: 0.2s;
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="%23334155" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>');
+        }
+        ::-webkit-calendar-picker-indicator:hover {
+            opacity: 1;
+            transform: scale(1.1);
+        }
     </style>
 </head>
 <body class="bg-slate-50">
@@ -46,15 +83,11 @@
             BarChart, Bar, Cell, PieChart, Pie, Legend 
         } = Recharts;
 
-        // --- POPRAVKA IKONICA ---
+        // --- ICONS ---
         const LucideIcon = ({ name, size = 24, className, ...props }) => {
-            // Pokušavamo da nađemo ikonicu u globalnom 'lucide' objektu
-            // Proveravamo i PascalCase (npr. DollarSign) i camelCase (npr. dollarSign)
             const iconKey = name;
             const iconKeyCamel = name.charAt(0).toLowerCase() + name.slice(1);
-            
             const iconData = lucide.icons[iconKey] || lucide.icons[iconKeyCamel];
-            
             if (!iconData) return null;
             
             return (
@@ -86,7 +119,8 @@
             'ChevronDown', 'UserCheck', 'FileText', 'Bell', 'HelpCircle', 'Menu', 'LogIn', 'Lock', 'Mail',
             'ClipboardCheck', 'Droplets', 'Calendar', 'ChevronLeft', 'ChevronRight', 'LogOut', 'PanelLeftClose', 'PanelLeftOpen',
             'Wallet', 'Briefcase', 'Timer', 'Award', 'User', 'Shield', 'BadgeCheck', 'UserCircle', 'Store', 'ChefHat', 'Utensils',
-            'Edit3', 'Check', 'Trash2', 'AlertTriangle'
+            'Edit3', 'Check', 'Trash2', 'AlertTriangle', 'Plus', 'Megaphone', 'Brush', 'UserPlus', 'Cake',
+            'Thermometer', 'Beer', 'FileCheck', 'Eye', 'CalendarDays', 'RefreshCw'
         ];
 
         const Icons = {};
@@ -102,23 +136,74 @@
             ChevronDown, UserCheck, FileText, Bell, HelpCircle, Menu, LogIn, Lock, Mail,
             ClipboardCheck, Droplets, Calendar, ChevronLeft, ChevronRight, LogOut, PanelLeftClose, PanelLeftOpen,
             Wallet, Briefcase, Timer, Award, User, Shield, BadgeCheck, UserCircle, Store, ChefHat, Utensils,
-            Edit3, Check, Trash2, AlertTriangle
+            Edit3, Check, Trash2, AlertTriangle, Plus, Megaphone, Brush, UserPlus, Cake,
+            Thermometer, Beer, FileCheck, Eye, CalendarDays, RefreshCw
         } = Icons;
 
         // --- APP CODE ---
 
-        const PaprikaLogo = ({ className = "", collapsed = false }) => (
+        const PaprikaLogo = ({ className = "", collapsed = false, subtitleColor = "text-[#d13334]" }) => (
           <div className={`flex items-center gap-2 transition-all duration-300 ${className}`}>
             {!collapsed ? (
               <div className="flex flex-col justify-center">
-                <span style={{ fontFamily: "'Rubik', sans-serif", fontWeight: 900, letterSpacing: '1px' }} className="text-2xl text-[#d13334] leading-none">PAPRIKA</span>
-                <span style={{ fontFamily: "'Rubik', sans-serif", fontWeight: 700 }} className="text-lg text-[#d13334] leading-none mt-0.5 tracking-wide">Dashboard</span>
+                <span style={{ fontFamily: "'Rubik', sans-serif", fontWeight: 900, letterSpacing: '1px' }} className="text-2xl text-[#d13334] leading-none tracking-wide">PAPRIKA</span>
+                <span style={{ fontFamily: "'Rubik', sans-serif", fontWeight: 500 }} className={`text-lg ${subtitleColor} leading-none mt-0.5 tracking-wide`}>Dashboard</span>
               </div>
             ) : (
-               <span style={{ fontFamily: "'Rubik', sans-serif", fontWeight: 900 }} className="text-[#d13334] text-2xl">P</span>
+               <span style={{ fontFamily: "'Rubik', sans-serif", fontWeight: 900 }} className="text-[#d13334] text-2xl tracking-wide">P</span>
             )}
           </div>
         );
+
+        // --- CHECKLISTS CONFIG ---
+        const CHECKLIST_TEMPLATES = {
+            drinks: {
+                id: 'drinks',
+                title: 'Stanje Pića',
+                icon: Beer,
+                color: 'text-orange-500',
+                bgColor: 'bg-orange-50',
+                items: ['Coca Cola 0.3l', 'Zero Coca Cola 0.3l', 'Fanta 0.3l', 'Fuze Tea Breskva 0.5l', 'Rosa 0.5l', 'Gazirana Rosa 0.5l']
+            },
+            temps: {
+                id: 'temps',
+                title: 'Temperatura Rashladnih Uređaja',
+                icon: Thermometer,
+                color: 'text-blue-500',
+                bgColor: 'bg-blue-50',
+                items: ['F1 (Frižider 1)', 'F2 (Frižider 2)', 'Z1 (Zamrzivač 1)', 'Z2 (Zamrzivač 2)']
+            }
+        };
+
+        const INITIAL_CHECKLIST_LOGS = [
+            { id: 101, type: 'Stanje Pića', employee: 'Nada Riedl', location: 'Paprika', date: '18.02.2026. 08:15', percentage: 100, status: 'Završeno', data: { 'Coca Cola 0.3l': '24', 'Zero Coca Cola 0.3l': '10', 'Fanta 0.3l': '15', 'Fuze Tea Breskva 0.5l': '12', 'Rosa 0.5l': '30', 'Gazirana Rosa 0.5l': '20' } },
+            { id: 102, type: 'Temperatura', employee: 'Zorana Novaković', location: 'Paprika', date: '18.02.2026. 09:00', percentage: 100, status: 'Završeno', data: { 'F1 (Frižider 1)': '4', 'F2 (Frižider 2)': '3', 'Z1 (Zamrzivač 1)': '-18', 'Z2 (Zamrzivač 2)': '-20' } },
+            { id: 103, type: 'Stanje Pića', employee: 'Aleksandar Bobeta', location: 'Hangar', date: '17.02.2026. 22:30', percentage: 90, status: 'Nepotpuno', data: { 'Coca Cola 0.3l': '50', 'Zero Coca Cola 0.3l': '20', 'Fanta 0.3l': '10' } }
+        ];
+
+        // --- OIL CHANGE CONFIG ---
+        const INITIAL_OIL_DATA = {
+            paprika: { name: 'Paprika', lastChanged: '2026-02-15' },
+            gyros: { name: 'Gyros', lastChanged: '2026-02-10' }, // Kasni
+            smash: { name: 'Smash', lastChanged: '2026-02-17' },
+            hangar: { name: 'Hangar', lastChanged: '2026-02-12' } // Danas/Sutra
+        };
+
+        // Helper: Date Formatter
+        const formatDate = (date) => {
+            if (!date) return '';
+            const d = new Date(date);
+            if (isNaN(d.getTime())) return '';
+            return `${d.getDate().toString().padStart(2, '0')}.${(d.getMonth() + 1).toString().padStart(2, '0')}.${d.getFullYear()}.`;
+        };
+
+        // Helper: Check Birthday
+        const isBirthday = (dateString) => {
+            if (!dateString) return false;
+            const birthDate = new Date(dateString);
+            const today = new Date();
+            return birthDate.getDate() === today.getDate() && birthDate.getMonth() === today.getMonth();
+        };
 
         const calculateTenure = (startDateString) => {
           if (!startDateString) return 'Nepoznato';
@@ -150,25 +235,18 @@
           return `${years} godina, ${months} meseci, ${days} dana`;
         };
 
+        // --- DATABASE ---
+        const today = new Date();
+        const todayString = `1990-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+
         const INITIAL_EMPLOYEES_DB = {
           paprika: {
             id: 'paprika',
             name: 'Paprika',
             address: 'Vojislava Ilića 80, Beograd',
             staff: [
-              { id: 'p1', name: 'Ljilja', role: 'Pizza majstor', salary: '140.000 RSD', startDate: '2023-01-15', hoursToday: 8, hoursMonth: 160, note: '' },
-              { id: 'p2', name: 'Dragče', role: 'Pizza majstor', salary: '150.000 RSD', startDate: '2022-05-20', hoursToday: 8, hoursMonth: 168, note: '' },
-              { id: 'p3', name: 'Nikola', role: 'Pizza majstor', salary: '130.000 RSD', startDate: '2024-02-10', hoursToday: 7, hoursMonth: 150, note: '' },
-              { id: 'p4', name: 'Goca', role: 'Kuhinja', salary: '110.000 RSD', startDate: '2024-08-01', hoursToday: 8, hoursMonth: 160, note: '' },
-              { id: 'p5', name: 'Katarina', role: 'Kuhinja', salary: '130.000 RSD', startDate: '2023-11-15', hoursToday: 8, hoursMonth: 160, note: '' },
-              { id: 'p6', name: 'Jelena', role: 'Šalter radnik', salary: '130.000 RSD', startDate: '2023-03-01', hoursToday: 8, hoursMonth: 160, note: '' },
-              { id: 'p7', name: 'Aleksandra', role: 'Šalter radnik', salary: '130.000 RSD', startDate: '2023-06-15', hoursToday: 8, hoursMonth: 160, note: '' },
-              { id: 'p8', name: 'Ana', role: 'Šalter radnik', salary: '100.000 RSD', startDate: '2025-01-10', hoursToday: 8, hoursMonth: 160, note: '' },
-              { id: 'p9', name: 'Miloš', role: 'Šalter radnik', salary: '4.600 RSD / dan', startDate: '2024-12-01', hoursToday: 0, hoursMonth: 40, note: 'Radi 3-4 dana nedeljno' },
-              { id: 'p10', name: 'Zorana', role: 'Šalter radnik', salary: '130.000 RSD', startDate: '2023-09-01', hoursToday: 8, hoursMonth: 160, note: 'Radi nekad u Paprici, nekad u Gyrosu' },
-              { id: 'p11', name: 'Dane', role: 'Roštilj majstor', salary: '150.000 RSD', startDate: '2022-01-01', hoursToday: 8, hoursMonth: 170, note: '' },
-              { id: 'p12', name: 'Bojan', role: 'Roštilj majstor', salary: '150.000 RSD', startDate: '2022-06-15', hoursToday: 8, hoursMonth: 165, note: '' },
-              { id: 'p13', name: 'Aca', role: 'Roštilj majstor', salary: '140.000 RSD', startDate: '2023-02-01', hoursToday: 8, hoursMonth: 160, note: '' },
+              { id: 'p1', name: 'Ljilja', role: 'Pizza majstor', salary: '140.000 RSD', startDate: '2023-01-15', birthDate: '1985-05-12', hoursToday: 8, hoursMonth: 160, note: '' },
+              { id: 'p2', name: 'Dragče', role: 'Pizza majstor', salary: '150.000 RSD', startDate: '2022-05-20', birthDate: todayString, hoursToday: 8, hoursMonth: 168, note: '' }, 
             ]
           },
           gyros: {
@@ -176,19 +254,7 @@
             name: 'Gyros',
             address: 'Gospodara Vučića 200, Beograd',
             staff: [
-              { id: 'g1', name: 'Nikola', role: 'Gyros majstor', salary: '150.000 RSD', startDate: '2022-03-15', hoursToday: 8, hoursMonth: 160, note: '' },
-              { id: 'g2', name: 'Bojan', role: 'Team Leader', salary: '150.000 RSD', startDate: '2021-05-10', hoursToday: 9, hoursMonth: 180, note: '' },
-              { id: 'g3', name: 'Nenad', role: 'Gyros majstor', salary: '120.000 RSD', startDate: '2024-01-20', hoursToday: 8, hoursMonth: 160, note: '' },
-              { id: 'g4', name: 'Manuel', role: 'Gyros majstor', salary: '120.000 RSD', startDate: '2024-02-01', hoursToday: 8, hoursMonth: 160, note: '' },
-              { id: 'g5', name: 'Sanela', role: 'Šalter radnik', salary: '100.000 RSD', startDate: '2025-01-05', hoursToday: 8, hoursMonth: 150, note: '' },
-              { id: 'g6', name: 'Rada', role: 'Šalter radnik', salary: '100.000 RSD', startDate: '2025-01-05', hoursToday: 8, hoursMonth: 150, note: '' },
-              { id: 'g7', name: 'Natalija', role: 'Šalter radnik', salary: '4.240 RSD / dan', startDate: '2024-11-01', hoursToday: 0, hoursMonth: 30, note: 'Radi na dnevnice po potrebi' },
-              { id: 'g8', name: 'Stefan', role: 'Šalter radnik', salary: '105.000 RSD', startDate: '2024-10-15', hoursToday: 8, hoursMonth: 160, note: '' },
-              { id: 'g9', name: 'Deni', role: 'Ispomoć', salary: '110.000 RSD', startDate: '2024-05-01', hoursToday: 8, hoursMonth: 160, note: '' },
-              { id: 'g10', name: 'Luka', role: 'Gyros majstor', salary: '100.000 RSD', startDate: '2025-02-01', hoursToday: 8, hoursMonth: 160, note: '' },
-              { id: 'g11', name: 'Srećko', role: 'Gyros majstor', salary: '5.390 RSD / dan', startDate: '2024-12-01', hoursToday: 0, hoursMonth: 20, note: 'Po potrebi' },
-              { id: 'g12', name: 'Andrija', role: 'Šalter radnik', salary: '4.240 RSD / dan', startDate: '2025-01-15', hoursToday: 0, hoursMonth: 20, note: 'Po potrebi' },
-              { id: 'g13', name: 'Nemanja', role: 'Šalter radnik', salary: '4.240 RSD / dan', startDate: '2025-01-15', hoursToday: 0, hoursMonth: 20, note: 'Po potrebi' },
+              { id: 'g1', name: 'Nikola', role: 'Gyros majstor', salary: '150.000 RSD', startDate: '2022-03-15', birthDate: '1991-05-05', hoursToday: 8, hoursMonth: 160, note: '' },
             ]
           },
           radionica: {
@@ -196,11 +262,7 @@
             name: 'Radionica',
             address: 'Gospodara Vučića 200, Beograd',
             staff: [
-              { id: 'r1', name: 'Nada', role: 'Team Leader', salary: '140.000 RSD', startDate: '2021-08-01', hoursToday: 8, hoursMonth: 160, note: '' },
-              { id: 'r2', name: 'Vlada', role: 'Mesar', salary: '100.000 RSD', startDate: '2024-05-15', hoursToday: 8, hoursMonth: 160, note: '' },
-              { id: 'r3', name: 'Marijana', role: 'Priprema', salary: '110.000 RSD', startDate: '2023-11-01', hoursToday: 8, hoursMonth: 160, note: '' },
-              { id: 'r4', name: 'Meri', role: 'Priprema', salary: '100.000 RSD', startDate: '2024-09-01', hoursToday: 8, hoursMonth: 160, note: '' },
-              { id: 'r5', name: 'Alex', role: 'Priprema', salary: '80.000 RSD', startDate: '2025-02-01', hoursToday: 8, hoursMonth: 160, note: '' },
+              { id: 'r1', name: 'Nada', role: 'Team Leader', salary: '140.000 RSD', startDate: '2021-08-01', birthDate: '1985-08-25', hoursToday: 8, hoursMonth: 160, note: '' },
             ]
           },
           burgeri: {
@@ -208,8 +270,7 @@
             name: 'Burgeri',
             address: 'Gospodara Vučića 200 (u Radionici)',
             staff: [
-              { id: 'b1', name: 'Nemanja', role: 'Burger majstor', salary: '110.000 RSD', startDate: '2024-04-01', hoursToday: 8, hoursMonth: 160, note: '' },
-              { id: 'b2', name: 'Duni', role: 'Burger majstor', salary: '100.000 RSD', startDate: '2024-09-15', hoursToday: 8, hoursMonth: 160, note: '' },
+              { id: 'b1', name: 'Nemanja', role: 'Burger majstor', salary: '110.000 RSD', startDate: '2024-04-01', birthDate: '1993-03-15', hoursToday: 8, hoursMonth: 160, note: '' },
             ]
           },
           hangar: {
@@ -217,12 +278,7 @@
             name: 'Hangar',
             address: 'Omladinskih Brigada 88, Beograd',
             staff: [
-              { id: 'h1', name: 'Jelena', role: 'Team Leader', salary: '140.000 RSD', startDate: '2022-10-01', hoursToday: 8, hoursMonth: 160, note: '' },
-              { id: 'h2', name: 'Jasmina', role: 'Priprema/Roštilj', salary: '120.000 RSD', startDate: '2023-05-15', hoursToday: 8, hoursMonth: 160, note: '' },
-              { id: 'h3', name: 'Miljana', role: 'Šalter radnik', salary: '100.000 RSD', startDate: '2024-07-01', hoursToday: 8, hoursMonth: 160, note: '' },
-              { id: 'h4', name: 'Katarina', role: 'Šalter radnik', salary: '100.000 RSD', startDate: '2024-08-01', hoursToday: 8, hoursMonth: 160, note: '' },
-              { id: 'h5', name: 'Milica', role: 'Šalter radnik', salary: '90.000 RSD', startDate: '2026-01-20', hoursToday: 8, hoursMonth: 160, note: 'Na probi mesec dana' },
-              { id: 'h6', name: 'Milan', role: 'Šalter radnik', salary: '120.000 RSD', startDate: '2023-12-01', hoursToday: 8, hoursMonth: 160, note: 'Odlazi iz firme do kraja februara' },
+              { id: 'h1', name: 'Jelena', role: 'Team Leader', salary: '140.000 RSD', startDate: '2022-10-01', birthDate: '1986-02-14', hoursToday: 8, hoursMonth: 160, note: '' },
             ]
           }
         };
@@ -248,13 +304,13 @@
                 <div className="p-3 rounded-2xl bg-emerald-50 text-emerald-600"><Wallet className="w-6 h-6" /></div>
                 <div className="flex items-center gap-1 px-2 py-1 bg-emerald-100 rounded-lg">
                     <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span>
-                    <span className="text-[10px] font-bold text-emerald-700 uppercase">Uživo</span>
+                    <span className="text-[10px] font-bold text-emerald-700 uppercase tracking-wide">Uživo</span>
                 </div>
               </div>
               <div className="relative z-10">
                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Zarada Danas</p>
                 <h3 className="text-3xl font-black text-slate-900 tracking-tight flex items-baseline gap-1">
-                  {earnedToday.toFixed(2)} <span className="text-sm text-slate-400 font-bold">RSD</span>
+                  {earnedToday.toFixed(2)} <span className="text-sm text-slate-400 font-bold tracking-wide">RSD</span>
                 </h3>
                 <p className="text-[10px] text-slate-400 font-bold mt-2 uppercase tracking-tight">Od check-ina u 08:00h</p>
               </div>
@@ -276,6 +332,23 @@
           const [isEditingEmployee, setIsEditingEmployee] = useState(false);
           const [employeeFormData, setEmployeeFormData] = useState({});
           const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+          const [showActionModal, setShowActionModal] = useState(false);
+          const [showAddEmployeeModal, setShowAddEmployeeModal] = useState(false);
+          const [newEmployeeData, setNewEmployeeData] = useState({
+              name: '', role: '', salary: '', startDate: '', birthDate: '', location: 'paprika'
+          });
+
+          // CHECKLIST STATE
+          const [checklistLogs, setChecklistLogs] = useState(INITIAL_CHECKLIST_LOGS);
+          const [activeChecklist, setActiveChecklist] = useState(null); 
+          const [checklistData, setChecklistData] = useState({}); 
+          const [isClockedIn, setIsClockedIn] = useState(false); 
+          const [viewLog, setViewLog] = useState(null); 
+          const [checklistLocationFilter, setChecklistLocationFilter] = useState('Paprika'); 
+          const [checklistDateFilter, setChecklistDateFilter] = useState(new Date().toISOString().split('T')[0]);
+
+          // OIL DATA STATE
+          const [oilData, setOilData] = useState(INITIAL_OIL_DATA);
 
           const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false); 
           const [isDesktopSidebarOpen, setIsDesktopSidebarOpen] = useState(true);
@@ -290,13 +363,20 @@
             { id: 'paprika_hangar', name: 'Paprika Hangar', address: 'Omladinskih Brigada 88, Beograd' }
           ];
 
+          const checklistLocations = ['Paprika', 'Gyros', 'Radionica', 'Burgeri', 'Hangar'];
+
           const [input, setInput] = useState("");
           const [messages, setMessages] = useState([
             { role: 'ai', text: 'Pozdrav! Ja sam vaš Paprika asistent. Analiziram podatke za januar 2026. Kako vam mogu pomoći danas?' }
           ]);
            
           const [showDatePicker, setShowDatePicker] = useState(false);
-          const [dateRange, setDateRange] = useState({ start: new Date(2026, 0, 1), end: new Date(2026, 0, 31) });
+          const [dateRange, setDateRange] = useState({ 
+              start: new Date(2026, 0, 1), 
+              end: new Date(2026, 0, 31),
+              startStr: '2026-01-01',
+              endStr: '2026-01-31'
+          });
            
           const chatEndRef = useRef(null);
           const mainContentRef = useRef(null);
@@ -309,22 +389,30 @@
           const apiKey = ""; 
           const model = "gemini-2.5-flash-preview-09-2025";
 
+          // AŽURIRANI KORISNICI - REZIME
           const USERS = {
-            ADMIN: { role: 'admin', name: "Glavni Admin", roleLabel: "Administrator", password: "1234" },
-            MANAGER: { role: 'manager', name: "Marko Marković", roleLabel: "Generalni Menadžer", password: "2345" },
-            LEAD: { role: 'lead', name: "Jovana Jović", roleLabel: "Team Leader", password: "3456" },
-            EMPLOYEE: { role: 'employee', name: "Todor Vučenović", roleLabel: "Zaposleni", password: "4567", tenure: "1 godina i 4 meseca", monthlySalary: 100000, currentBonus: 15000, hoursToday: 4.25, hoursMonth: 142, checkInTime: new Date(new Date().setHours(new Date().getHours() - 4)) }
+            ADMIN: { role: 'admin', name: "Todor Vučenović", roleLabel: "Administrator", password: "1234", location: 'all' },
+            MANAGER: { role: 'manager', name: "Aleksandar Bobeta", roleLabel: "Generalni Menadžer", password: "2345", location: 'all' },
+            
+            // Team Leaders
+            LEAD_PAPRIKA: { role: 'lead', name: "Nada Riedl", roleLabel: "Team Leader", location: 'paprika', password: "3456", tenure: "2 godine", monthlySalary: 140000, currentBonus: 20000, hoursToday: 6, hoursMonth: 155, checkInTime: new Date(new Date().setHours(new Date().getHours() - 6)) },
+            LEAD_GYROS: { role: 'lead', name: "Bojan Rajić", roleLabel: "Team Leader", location: 'gyros', password: "1111", tenure: "3 godine", monthlySalary: 150000, currentBonus: 25000, hoursToday: 7, hoursMonth: 160, checkInTime: new Date(new Date().setHours(new Date().getHours() - 7)) },
+
+            // Zaposleni
+            EMP_ZORANA: { role: 'employee', name: "Zorana Novaković", roleLabel: "Zaposleni", location: 'paprika', password: "4567", tenure: "1 godina i 4 meseca", monthlySalary: 100000, currentBonus: 15000, hoursToday: 4.25, hoursMonth: 142, checkInTime: new Date(new Date().setHours(new Date().getHours() - 4)) },
+            EMP_JELENA: { role: 'employee', name: "Jelena Jonić", roleLabel: "Zaposleni", location: 'paprika', password: "2222", tenure: "8 meseci", monthlySalary: 95000, currentBonus: 10000, hoursToday: 8, hoursMonth: 160, checkInTime: new Date(new Date().setHours(new Date().getHours() - 8)) },
+            EMP_MILJANA: { role: 'employee', name: "Miljana Mitrović", roleLabel: "Zaposleni", location: 'hangar', password: "3333", tenure: "6 meseci", monthlySalary: 90000, currentBonus: 8000, hoursToday: 5, hoursMonth: 130, checkInTime: new Date(new Date().setHours(new Date().getHours() - 5)) },
+            EMP_NEMANJA: { role: 'employee', name: "Nemanja Stefanović", roleLabel: "Zaposleni", location: 'smash', password: "4444", tenure: "1 godina", monthlySalary: 110000, currentBonus: 12000, hoursToday: 3, hoursMonth: 120, checkInTime: new Date(new Date().setHours(new Date().getHours() - 3)) },
           };
 
           const data = {
             revenue: 27003480, laborCost: 5404500, totalCosts: 26243290,
             locations: [{ name: 'Paprika', value: 9332080 }, { name: 'Gyro', value: 9369310 }, { name: 'Smash', value: 1864260 }, { name: 'Hangar', value: 6437830 }]
           };
+          // Chart colors updated
           const trendData = [{ month: 'Nov', prihod: 32.9, trosak: 23.7 }, { month: 'Dec', prihod: 34.9, trosak: 30.0 }, { month: 'Jan', prihod: 27.0, trosak: 26.2 }];
-          const COLORS = ['#3b82f6', '#8b5cf6', '#ec4899', '#f59e0b'];
           const formatCurrency = (val) => new Intl.NumberFormat('sr-RS').format(val) + ' RSD';
-          const formatDate = (date) => date.toLocaleDateString('sr-RS', { day: 'numeric', month: 'short', year: 'numeric' });
-
+          
           const handleEmployeeClick = (employee) => {
             setSelectedEmployee(employee);
             setEmployeeFormData(employee);
@@ -350,6 +438,100 @@
               setEmployeesDb(updatedDb);
               setSelectedEmployee(null);
               setShowDeleteConfirm(false);
+          };
+
+          const handleAddEmployee = () => {
+              const updatedDb = { ...employeesDb };
+              const targetLocation = newEmployeeData.location;
+              const newId = targetLocation.charAt(0) + (updatedDb[targetLocation].staff.length + 100); 
+              
+              updatedDb[targetLocation].staff.push({
+                  id: newId,
+                  ...newEmployeeData,
+                  hoursToday: 0,
+                  hoursMonth: 0,
+                  note: 'Novi zaposleni'
+              });
+
+              setEmployeesDb(updatedDb);
+              setShowAddEmployeeModal(false);
+              setNewEmployeeData({ name: '', role: '', salary: '', startDate: '', birthDate: '', location: 'paprika' });
+          };
+
+          const handleDateRangeChange = (type, val) => {
+              const newRange = { ...dateRange };
+              if (type === 'start') {
+                  newRange.startStr = val;
+                  newRange.start = new Date(val);
+              } else {
+                  newRange.endStr = val;
+                  newRange.end = new Date(val);
+              }
+              setDateRange(newRange);
+          };
+
+          // CHECKLIST HANDLERS
+          const openChecklist = (type) => {
+              setActiveChecklist(type);
+              setChecklistData({});
+          };
+
+          const submitChecklist = () => {
+              const template = CHECKLIST_TEMPLATES[activeChecklist];
+              const percentage = Math.round((Object.values(checklistData).filter(v => v && v.toString().trim() !== '').length / template.items.length) * 100);
+              const now = new Date();
+              const dateStr = now.getDate().toString().padStart(2, '0') + '.' + (now.getMonth() + 1).toString().padStart(2, '0') + '.' + now.getFullYear() + '. ' + String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
+
+              const newLog = {
+                  id: Date.now(),
+                  type: template.title,
+                  employee: currentUserData.name,
+                  location: 'Paprika', // Default for now
+                  date: dateStr,
+                  percentage: percentage,
+                  status: percentage === 100 ? 'Završeno' : 'Nepotpuno',
+                  data: { ...checklistData }
+              };
+
+              setChecklistLogs([newLog, ...checklistLogs]);
+              setActiveChecklist(null);
+          };
+
+          const getFilteredLogs = () => {
+              let logs = checklistLogs;
+              if (userRole === 'employee') {
+                  logs = logs.filter(log => log.employee === currentUserData.name);
+              } else {
+                  logs = logs.filter(log => log.location === checklistLocationFilter);
+              }
+              // Skip complex date filter for now
+              return logs;
+          };
+
+          // --- OIL CHANGE LOGIC ---
+          const getOilStatus = (lastChangedDate) => {
+              const last = new Date(lastChangedDate);
+              const next = new Date(last);
+              next.setDate(last.getDate() + 7);
+              const now = new Date();
+              
+              // Calculate difference in days
+              const diffTime = next - now;
+              const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+              if (diffDays < 0) return { status: 'critical', text: 'ZAMENI ODMAH', color: 'text-rose-500', bg: 'bg-rose-50', icon: AlertTriangle };
+              if (diffDays <= 1) return { status: 'warning', text: 'USKORO ZAMENA', color: 'text-orange-500', bg: 'bg-orange-50', icon: Clock };
+              return { status: 'ok', text: 'SVE OK', color: 'text-emerald-500', bg: 'bg-emerald-50', icon: Check };
+          };
+
+          const handleOilChange = (locationKey) => {
+              const today = new Date();
+              const dateStr = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0') + '-' + String(today.getDate()).padStart(2, '0');
+              
+              setOilData({
+                  ...oilData,
+                  [locationKey]: { ...oilData[locationKey], lastChanged: dateStr }
+              });
           };
 
           useEffect(() => {
@@ -386,15 +568,17 @@
                      return;
                 }
                 let userFound = null;
-                if (password === USERS.ADMIN.password) userFound = USERS.ADMIN;
-                else if (password === USERS.MANAGER.password) userFound = USERS.MANAGER;
-                else if (password === USERS.LEAD.password) userFound = USERS.LEAD;
-                else if (password === USERS.EMPLOYEE.password) userFound = USERS.EMPLOYEE;
+                // Simple Login Logic matching passwords
+                Object.values(USERS).forEach(user => {
+                    if(user.password === password) userFound = user;
+                });
+
                 if (userFound) {
                     setIsLoggedIn(true);
                     setUserRole(userFound.role);
                     setCurrentUserData(userFound);
                     setActiveTab(userFound.role === 'employee' ? 'overview' : 'overview');
+                    setIsClockedIn(userFound.role !== 'admin');
                 } else {
                     setLoginError('Pogrešna lozinka.');
                 }
@@ -416,6 +600,7 @@
               setCurrentUserData(user);
               setShowUserMenu(false);
               setActiveTab('overview');
+              setIsClockedIn(user.role !== 'admin');
           };
 
           const handleLocationSelect = (locId) => {
@@ -429,34 +614,69 @@
 
           const getRoleColor = (role) => {
               const r = role.toLowerCase();
-              if (r.includes('team leader')) return 'bg-purple-100 text-purple-700';
+              if (r.includes('team leader')) return 'bg-purple-100 text-purple-700'; 
               if (r.includes('majstor')) return 'bg-orange-100 text-orange-700';
               return 'bg-blue-50 text-blue-600';
           };
 
-          const NavigationContent = ({ compact }) => (
-            <div className="space-y-4">
-              {userRole !== 'employee' && (
-                <div className="space-y-1">
-                    {!compact && <p className="px-4 text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Glavni Meni</p>}
-                    <button onClick={() => setActiveTab('overview')} className={`w-full group flex items-center gap-3 p-2.5 rounded-2xl transition-all text-left ${activeTab === 'overview' ? 'bg-slate-900 text-white shadow-lg' : 'hover:bg-slate-50 text-slate-600'} ${compact ? 'justify-center' : ''}`} title={compact ? 'Analitika' : ''}>
-                        <BarChart3 className={`w-4 h-4 ${activeTab === 'overview' ? 'text-white' : 'text-slate-400 group-hover:text-slate-900'}`} />{!compact && <span className="text-xs font-bold">Analitika</span>}
-                    </button>
-                    <button onClick={() => setActiveTab('employees')} className={`w-full group flex items-center gap-3 p-2.5 rounded-2xl transition-all text-left ${activeTab === 'employees' ? 'bg-slate-900 text-white shadow-lg' : 'hover:bg-slate-50 text-slate-600'} ${compact ? 'justify-center' : ''}`} title={compact ? 'Zaposleni' : ''}>
-                        <Users className={`w-4 h-4 ${activeTab === 'employees' ? 'text-white' : 'text-slate-400 group-hover:text-slate-900'}`} />{!compact && <span className="text-xs font-bold">Zaposleni</span>}
-                    </button>
+          const NavigationContent = ({ compact }) => {
+            // Logika za prikazivanje menija na osnovu uloge
+            
+            // ADMIN I MANAGER vide sve
+            const adminItems = [
+                { id: 'overview', label: 'Analitika', icon: BarChart3 },
+                { id: 'employees', label: 'Zaposleni', icon: Users },
+                { id: 'checklists', label: 'Ček lista', icon: ClipboardCheck }, 
+                { id: 'oil', label: 'Zamena ulja', icon: Droplets }
+            ];
+
+            // TEAM LEADER
+            const leadItems = [
+                { id: 'overview', label: 'Profil', icon: User }, 
+                { label: 'Trebovanje', icon: Package },
+                { label: 'Smene', icon: Calendar },
+                { id: 'checklists', label: 'Ček liste', icon: ClipboardCheck },
+                { id: 'oil', label: 'Zamena ulja', icon: Droplets }
+            ];
+
+            // ZAPOSLENI
+            const employeeItems = [
+                { id: 'overview', label: 'Profil', icon: User }, 
+                { label: 'Moja smena', icon: Clock },
+                { id: 'checklists', label: 'Ček liste', icon: ClipboardCheck },
+                { id: 'oil', label: 'Zamena ulja', icon: Droplets }
+            ];
+
+            let itemsToShow = [];
+            if (userRole === 'admin' || userRole === 'manager') itemsToShow = adminItems;
+            else if (userRole === 'lead') itemsToShow = leadItems;
+            else itemsToShow = employeeItems;
+
+            return (
+                <div className="space-y-4">
+                  <div className="space-y-1">
+                    {!compact && <p className="px-4 text-[10px] font-black text-white uppercase tracking-widest mb-2">Meni</p>}
+                    
+                    {itemsToShow.map((item, i) => {
+                        // Ako item ima ID, to je tab koji se menja (Analitika/Zaposleni)
+                        if (item.id) {
+                            return (
+                                <button key={i} onClick={() => setActiveTab(item.id)} className={`w-full group flex items-center gap-3 p-2.5 rounded-2xl transition-all text-left ${activeTab === item.id ? 'bg-[#d13334] text-white shadow-lg shadow-[#d13334]/20' : 'text-white hover:bg-slate-800'} ${compact ? 'justify-center' : ''}`} title={compact ? item.label : ''}>
+                                    <item.icon className={`w-4 h-4 text-white`} />{!compact && <span className="text-xs font-bold tracking-wide">{item.label}</span>}
+                                </button>
+                            );
+                        }
+                        // Inače je "obično" dugme (Brze akcije)
+                        return (
+                            <button key={i} className={`w-full group flex items-center gap-3 p-2.5 rounded-2xl transition-all text-left text-white hover:bg-slate-800 ${compact ? 'justify-center' : ''}`} title={compact ? item.label : ''}>
+                                <item.icon className="w-4 h-4 text-white" />{!compact && <span className="text-xs font-bold tracking-wide">{item.label}</span>}
+                            </button>
+                        );
+                    })}
+                  </div>
                 </div>
-              )}
-              <div className="space-y-1">
-                {!compact && <p className="px-4 text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Brze Akcije</p>}
-                {[{ label: 'Poruči Zalihe', icon: Package }, { label: 'Izveštaj Smena', icon: FileText }, { label: 'Podešavanja', icon: Settings }, { label: 'Ček lista', icon: ClipboardCheck }, { label: 'Zamena ulja', icon: Droplets }].map((item, i) => (
-                    <button key={i} className={`w-full group flex items-center gap-3 p-2.5 rounded-2xl transition-all text-left hover:bg-blue-50 text-slate-600 hover:text-blue-600 ${compact ? 'justify-center' : ''}`} title={compact ? item.label : ''}>
-                    <item.icon className="w-4 h-4 text-slate-400 group-hover:text-blue-600" />{!compact && <span className="text-xs font-bold">{item.label}</span>}
-                    </button>
-                ))}
-              </div>
-            </div>
-          );
+            );
+          };
 
           const UserProfile = ({ compact }) => (
             <div className="relative">
@@ -466,17 +686,17 @@
                   {Object.keys(USERS).map(key => (
                       <button key={key} onClick={() => quickSwitch(key)} className={`w-full flex items-center gap-3 p-2 rounded-xl transition-all mb-1 ${userRole === USERS[key].role ? 'bg-slate-100' : 'hover:bg-slate-50'}`}>
                         <div className="w-6 h-6 rounded-full bg-slate-200 flex items-center justify-center text-slate-600 font-bold text-[10px]">{USERS[key].name.charAt(0)}</div>
-                        <div className="text-left"><p className="text-xs font-bold text-slate-700">{USERS[key].roleLabel}</p></div>
+                        <div className="text-left"><p className="text-xs font-bold text-slate-700 tracking-wide">{USERS[key].roleLabel}</p></div>
                       </button>
                   ))}
                   <div className="h-px bg-slate-100 my-2"></div>
-                  <button onClick={handleLogout} className="w-full flex items-center gap-3 p-2 rounded-xl hover:bg-rose-50 text-rose-600 transition-colors text-left"><LogOut className="w-4 h-4" /> <span className="text-xs font-bold">Odjavi se</span></button>
+                  <button onClick={handleLogout} className="w-full flex items-center gap-3 p-2 rounded-xl hover:bg-rose-50 text-rose-600 transition-colors text-left"><LogOut className="w-4 h-4" /> <span className="text-xs font-bold tracking-wide">Odjavi se</span></button>
                 </div>
               )}
-              <button onClick={() => setShowUserMenu(!showUserMenu)} className={`w-full flex items-center gap-3 p-2 rounded-xl hover:bg-slate-50 transition-colors cursor-pointer group ${compact ? 'justify-center' : ''}`}>
-                <div className="w-9 h-9 rounded-full bg-red-100 flex items-center justify-center text-red-600 font-bold text-xs shrink-0 border-2 border-white shadow-sm">{currentUserData?.name.charAt(0)}</div>
-                {!compact && (<div className="overflow-hidden flex-1 text-left"><p className="text-xs font-bold text-slate-700 truncate">{currentUserData?.name}</p><p className="text-[10px] text-slate-400 truncate">{currentUserData?.roleLabel}</p></div>)}
-                {!compact && <ChevronDown className={`w-4 h-4 text-slate-300 transition-transform ${showUserMenu ? 'rotate-180' : ''}`} />}
+              <button onClick={() => setShowUserMenu(!showUserMenu)} className={`w-full flex items-center gap-3 p-2 rounded-xl hover:bg-slate-800 transition-colors cursor-pointer group ${compact ? 'justify-center' : ''}`}>
+                <div className="w-9 h-9 rounded-full bg-[#d13334] flex items-center justify-center text-white font-bold text-xs shrink-0 border-2 border-white shadow-sm">{currentUserData?.name.charAt(0)}</div>
+                {!compact && (<div className="overflow-hidden flex-1 text-left"><p className="text-xs font-bold text-white truncate tracking-wide">{currentUserData?.name}</p><p className="text-[10px] text-slate-400 truncate tracking-wide">{currentUserData?.roleLabel}</p></div>)}
+                {!compact && <ChevronDown className={`w-4 h-4 text-slate-400 group-hover:text-white transition-transform ${showUserMenu ? 'rotate-180' : ''}`} />}
               </button>
             </div>
           );
@@ -485,12 +705,12 @@
             return (
                 <div className="min-h-screen bg-[#f8fafc] flex items-center justify-center p-4 font-sans">
                     <div className="bg-white w-full max-w-md p-8 md:p-10 rounded-[2.5rem] shadow-xl shadow-slate-200 border border-slate-100 animate-in fade-in zoom-in-95 duration-300">
-                        <div className="flex flex-col items-center text-center mb-8"><div className="mb-6 p-4 bg-red-50 rounded-full animate-bounce-slow"><PaprikaLogo className="scale-125" /></div><h1 className="text-2xl font-black text-slate-900 mb-2">Dobrodošli nazad</h1><p className="text-slate-500 text-sm font-medium">Unesite svoje podatke za pristup panelu.</p></div>
+                        <div className="flex flex-col items-center text-center mb-8"><div className="mb-6 p-4 bg-[#f8f2d3] rounded-full animate-bounce-slow"><PaprikaLogo className="scale-125" /></div><h1 className="text-2xl font-black text-slate-900 mb-2 tracking-wide">Dobrodošli nazad</h1><p className="text-slate-500 text-sm font-medium">Unesite svoje podatke za pristup panelu.</p></div>
                         <form onSubmit={handleLogin} className="space-y-5">
-                            <div className="space-y-2"><label className="text-xs font-bold text-slate-700 ml-1 uppercase tracking-wide">Email Adresa</label><div className="relative"><div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none"><Mail className="h-5 w-5 text-slate-400" /></div><input type="text" className="w-full pl-11 pr-4 py-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-slate-400" placeholder="Vaš email" value={email} onChange={(e) => setEmail(e.target.value)} /></div></div>
-                            <div className="space-y-2"><div className="flex justify-between items-center ml-1"><label className="text-xs font-bold text-slate-700 uppercase tracking-wide">Lozinka</label></div><div className="relative"><div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none"><Lock className="h-5 w-5 text-slate-400" /></div><input type="password" className="w-full pl-11 pr-4 py-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-slate-400" placeholder="Vaša lozinka" value={password} onChange={(e) => setPassword(e.target.value)} /></div></div>
+                            <div className="space-y-2"><label className="text-xs font-bold text-slate-700 ml-1 uppercase tracking-wide">Email Adresa</label><div className="relative"><div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none"><Mail className="h-5 w-5 text-slate-400" /></div><input type="text" className="w-full pl-11 pr-4 py-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#d13334]/20 focus:border-[#d13334] transition-all placeholder:text-slate-400" placeholder="Vaš email" value={email} onChange={(e) => setEmail(e.target.value)} /></div></div>
+                            <div className="space-y-2"><div className="flex justify-between items-center ml-1"><label className="text-xs font-bold text-slate-700 uppercase tracking-wide">Lozinka</label></div><div className="relative"><div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none"><Lock className="h-5 w-5 text-slate-400" /></div><input type="password" className="w-full pl-11 pr-4 py-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#d13334]/20 focus:border-[#d13334] transition-all placeholder:text-slate-400" placeholder="Vaša lozinka" value={password} onChange={(e) => setPassword(e.target.value)} /></div></div>
                             {loginError && <div className="p-3 bg-rose-50 border border-rose-100 rounded-xl text-rose-600 text-xs font-bold text-center animate-in slide-in-from-top-2">{loginError}</div>}
-                            <button type="submit" disabled={isLoading} className="w-full py-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-2xl font-bold shadow-lg shadow-blue-200/50 transform active:scale-[0.98] transition-all flex items-center justify-center gap-2">{isLoading ? <><Loader2 className="w-5 h-5 animate-spin" /> Prijavljivanje...</> : <><LogIn className="w-5 h-5" /> Prijavi se</>}</button>
+                            <button type="submit" disabled={isLoading} className="w-full py-4 bg-gradient-to-r from-[#d13334] to-[#b32b2b] hover:from-[#e63b3b] hover:to-[#c43030] text-white rounded-2xl font-bold shadow-lg shadow-[#d13334]/30 transform active:scale-[0.98] transition-all flex items-center justify-center gap-2">{isLoading ? <><Loader2 className="w-5 h-5 animate-spin" /> Prijavljivanje...</> : <><LogIn className="w-5 h-5" /> Prijavi se</>}</button>
                         </form>
                     </div>
                 </div>
@@ -498,8 +718,187 @@
           }
 
           return (
-            <div className="h-screen bg-[#f8fafc] text-slate-900 font-sans flex flex-col md:flex-row overflow-hidden animate-in fade-in duration-500">
+            <div className="h-screen bg-slate-50 text-slate-900 font-sans flex flex-col md:flex-row overflow-hidden animate-in fade-in duration-500">
                
+              {/* MODAL ZA DETALJE ČEK LISTE */}
+              {viewLog && (
+                  <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[90] flex items-center justify-center p-4">
+                      <div className="bg-white rounded-[2.5rem] shadow-2xl max-w-lg w-full p-8 animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
+                          <div className="flex justify-between items-center mb-6 border-b border-slate-50 pb-4">
+                              <div>
+                                  <h3 className="text-xl font-black text-slate-900 tracking-wide">{viewLog.type}</h3>
+                                  <p className="text-sm text-slate-500 font-medium">Popunio: <span className="text-slate-700">{viewLog.employee}</span></p>
+                              </div>
+                              <button onClick={() => setViewLog(null)} className="p-2 hover:bg-slate-100 rounded-full"><X className="w-6 h-6 text-slate-400" /></button>
+                          </div>
+                          
+                          <div className="space-y-4">
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                  <div className="bg-slate-50 p-4 rounded-xl flex flex-col">
+                                      <p className="text-[10px] text-slate-400 font-bold uppercase mb-1">Lokacija</p>
+                                      <p className="font-bold text-slate-800 text-sm flex items-center gap-2"><MapPin className="w-4 h-4 text-slate-400" /> {viewLog.location}</p>
+                                  </div>
+                                  <div className="bg-slate-50 p-4 rounded-xl flex flex-col">
+                                      <p className="text-[10px] text-slate-400 font-bold uppercase mb-1">Datum i Vreme</p>
+                                      <div className="flex flex-col gap-1">
+                                          <p className="font-bold text-slate-800 text-sm flex items-center gap-2">
+                                              <Calendar className="w-4 h-4 text-slate-400"/> {viewLog.date.split(' ')[0]} 
+                                          </p>
+                                          <p className="font-bold text-slate-800 text-sm flex items-center gap-2">
+                                              <Clock className="w-4 h-4 text-slate-400"/> {viewLog.date.split(' ').slice(1).join(' ')}
+                                          </p>
+                                      </div>
+                                  </div>
+                              </div>
+
+                              <h4 className="text-sm font-black text-slate-900 uppercase tracking-wide mb-2">Uneseni Podaci</h4>
+                              <div className="bg-slate-50 rounded-xl overflow-hidden border border-slate-100">
+                                  {viewLog.data && Object.entries(viewLog.data).length > 0 ? (
+                                      <table className="w-full text-sm">
+                                          <tbody className="divide-y divide-slate-100">
+                                              {Object.entries(viewLog.data).map(([key, value], i) => (
+                                                  <tr key={i}>
+                                                      <td className="p-3 text-slate-600 font-medium">{key}</td>
+                                                      <td className="p-3 text-right font-bold text-slate-900">{value}</td>
+                                                  </tr>
+                                              ))}
+                                          </tbody>
+                                      </table>
+                                  ) : (
+                                      <div className="p-4 text-center text-slate-400 text-sm">Nema detaljnih podataka za ovaj zapis.</div>
+                                  )}
+                              </div>
+                              
+                              <div className="mt-6 pt-4 border-t border-slate-50 flex justify-between items-center">
+                                  <span className="text-xs font-bold text-slate-400">STATUS</span>
+                                  <span className={`px-3 py-1.5 rounded-lg text-xs font-black uppercase tracking-wide ${viewLog.status === 'Završeno' ? 'bg-emerald-50 text-emerald-600' : 'bg-orange-50 text-orange-600'}`}>
+                                      {viewLog.status}
+                                  </span>
+                              </div>
+                          </div>
+                      </div>
+                  </div>
+              )}
+
+              {/* MODAL ZA ČEK LISTU (UNOS) */}
+              {activeChecklist && CHECKLIST_TEMPLATES[activeChecklist] && (
+                  <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[80] flex items-center justify-center p-4">
+                      <div className="bg-white rounded-[2.5rem] shadow-2xl max-w-lg w-full p-8 animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
+                          <div className="flex justify-between items-center mb-6">
+                              <h3 className="text-2xl font-black text-slate-900 tracking-wide">{CHECKLIST_TEMPLATES[activeChecklist].title}</h3>
+                              <button onClick={() => setActiveChecklist(null)} className="p-2 hover:bg-slate-100 rounded-full"><X className="w-6 h-6 text-slate-400" /></button>
+                          </div>
+                          
+                          <div className="space-y-4">
+                              {CHECKLIST_TEMPLATES[activeChecklist].items.map((item, index) => (
+                                  <div key={index} className="space-y-1">
+                                      <label className="text-xs font-bold text-slate-500 uppercase tracking-wide">{item}</label>
+                                      <input 
+                                          type="text" 
+                                          placeholder={activeChecklist === 'drinks' ? "Unesi količinu" : "Unesi temperaturu"}
+                                          className="w-full p-3 bg-slate-50 rounded-xl border border-slate-200 font-medium focus:border-[#d13334] outline-none"
+                                          onChange={(e) => setChecklistData({...checklistData, [item]: e.target.value})}
+                                      />
+                                  </div>
+                              ))}
+                              
+                              <button onClick={submitChecklist} className="w-full py-4 bg-[#d13334] hover:bg-[#b32b2b] text-white rounded-2xl font-black text-lg shadow-xl shadow-[#d13334]/20 transition-all mt-6 flex items-center justify-center gap-2">
+                                  <FileCheck className="w-5 h-5" /> Sačuvaj Listu
+                              </button>
+                          </div>
+                      </div>
+                  </div>
+              )}
+
+              {/* OSTALI MODALI... */}
+              {showActionModal && (
+                  <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[80] flex items-center justify-center p-4">
+                      <div className="bg-white rounded-[2.5rem] shadow-2xl max-w-md w-full p-8 animate-in zoom-in-95 duration-200">
+                          <div className="flex justify-between items-center mb-6">
+                              <h3 className="text-2xl font-black text-slate-900 tracking-wide">Dodaj Akciju</h3>
+                              <button onClick={() => setShowActionModal(false)} className="p-2 hover:bg-slate-100 rounded-full"><X className="w-6 h-6 text-slate-400" /></button>
+                          </div>
+                          <div className="space-y-3">
+                              <button className="w-full p-4 bg-blue-50 hover:bg-blue-100 rounded-2xl flex items-center gap-4 transition-colors text-left group">
+                                  <div className="p-3 bg-blue-200 text-blue-700 rounded-xl group-hover:scale-110 transition-transform"><UserCheck className="w-6 h-6" /></div>
+                                  <div><h4 className="font-bold text-blue-900 tracking-wide">Taguj Zaposlenog</h4><p className="text-xs text-blue-600/80">Dodeli zadatak ili obaveštenje</p></div>
+                              </button>
+                              <button className="w-full p-4 bg-purple-50 hover:bg-purple-100 rounded-2xl flex items-center gap-4 transition-colors text-left group">
+                                  <div className="p-3 bg-purple-200 text-purple-700 rounded-xl group-hover:scale-110 transition-transform"><Megaphone className="w-6 h-6" /></div>
+                                  <div><h4 className="font-bold text-purple-900 tracking-wide">Zakaži Sastanak</h4><p className="text-xs text-purple-600/80">Timska organizacija</p></div>
+                              </button>
+                              <button className="w-full p-4 bg-emerald-50 hover:bg-emerald-100 rounded-2xl flex items-center gap-4 transition-colors text-left group">
+                                  <div className="p-3 bg-emerald-200 text-emerald-700 rounded-xl group-hover:scale-110 transition-transform"><Brush className="w-6 h-6" /></div>
+                                  <div><h4 className="font-bold text-emerald-900 tracking-wide">Generalno Čišćenje</h4><p className="text-xs text-emerald-600/80">Organizuj higijenu</p></div>
+                              </button>
+                          </div>
+                      </div>
+                  </div>
+              )}
+
+              {showAddEmployeeModal && (
+                  <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[80] flex items-center justify-center p-4">
+                      <div className="bg-white rounded-[2.5rem] shadow-2xl max-w-2xl w-full p-8 animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
+                          <div className="flex justify-between items-center mb-6">
+                              <div className="flex items-center gap-3">
+                                  <div className="p-3 bg-[#d13334]/10 text-[#d13334] rounded-2xl"><UserPlus className="w-6 h-6" /></div>
+                                  <h3 className="text-2xl font-black text-slate-900 tracking-wide">Novi Zaposleni</h3>
+                              </div>
+                              <button onClick={() => setShowAddEmployeeModal(false)} className="p-2 hover:bg-slate-100 rounded-full"><X className="w-6 h-6 text-slate-400" /></button>
+                          </div>
+                          
+                          <div className="space-y-4">
+                              <div className="space-y-2">
+                                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Lokacija</label>
+                                  <select 
+                                      value={newEmployeeData.location}
+                                      onChange={(e) => setNewEmployeeData({...newEmployeeData, location: e.target.value})}
+                                      className="w-full p-3 bg-slate-50 rounded-xl border border-slate-200 font-bold focus:border-[#d13334] outline-none"
+                                  >
+                                      <option value="paprika">Paprika Food</option>
+                                      <option value="gyros">Gyros & Smash</option>
+                                      <option value="radionica">Radionica</option>
+                                      <option value="burgeri">Burgeri</option>
+                                      <option value="hangar">Hangar</option>
+                                  </select>
+                              </div>
+
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                  <div className="space-y-2">
+                                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Ime i Prezime</label>
+                                      <input type="text" placeholder="Npr. Marko Marković" value={newEmployeeData.name} onChange={(e) => setNewEmployeeData({...newEmployeeData, name: e.target.value})} className="w-full p-3 bg-slate-50 rounded-xl border border-slate-200 font-bold focus:border-[#d13334] outline-none" />
+                                  </div>
+                                  <div className="space-y-2">
+                                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Pozicija</label>
+                                      <input type="text" placeholder="Npr. Pizza Majstor" value={newEmployeeData.role} onChange={(e) => setNewEmployeeData({...newEmployeeData, role: e.target.value})} className="w-full p-3 bg-slate-50 rounded-xl border border-slate-200 font-bold focus:border-[#d13334] outline-none" />
+                                  </div>
+                              </div>
+
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                  <div className="space-y-2">
+                                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Plata</label>
+                                      <input type="text" placeholder="Npr. 120.000 RSD" value={newEmployeeData.salary} onChange={(e) => setNewEmployeeData({...newEmployeeData, salary: e.target.value})} className="w-full p-3 bg-slate-50 rounded-xl border border-slate-200 font-bold focus:border-[#d13334] outline-none" />
+                                  </div>
+                                  <div className="space-y-2">
+                                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Datum Rođenja</label>
+                                      <input type="date" value={newEmployeeData.birthDate} onChange={(e) => setNewEmployeeData({...newEmployeeData, birthDate: e.target.value})} className="w-full" />
+                                  </div>
+                              </div>
+
+                              <div className="space-y-2">
+                                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Datum Zaposlenja</label>
+                                  <input type="date" value={newEmployeeData.startDate} onChange={(e) => setNewEmployeeData({...newEmployeeData, startDate: e.target.value})} className="w-full" />
+                              </div>
+
+                              <button onClick={handleAddEmployee} className="w-full py-4 bg-[#d13334] hover:bg-[#b32b2b] text-white rounded-2xl font-black text-lg shadow-xl shadow-[#d13334]/20 transition-all mt-4 flex items-center justify-center gap-2">
+                                  <Plus className="w-5 h-5" /> Sačuvaj Zaposlenog
+                              </button>
+                          </div>
+                      </div>
+                  </div>
+              )}
+
+              {/* EMPLOYEE DETAILS MODAL */}
               {selectedEmployee && (
                 <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[70] flex items-center justify-center p-4">
                     <div className="bg-white rounded-[2.5rem] shadow-2xl max-w-2xl w-full p-8 animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto relative">
@@ -509,22 +908,39 @@
                                     <div className="w-16 h-16 bg-rose-100 text-rose-600 rounded-full flex items-center justify-center mx-auto mb-4 animate-bounce-slow">
                                         <AlertTriangle className="w-8 h-8" />
                                     </div>
-                                    <h3 className="text-2xl font-black text-slate-900 mb-2">Pažnja!</h3>
+                                    <h3 className="text-2xl font-black text-slate-900 mb-2 tracking-wide">Pažnja!</h3>
                                     <p className="text-slate-500 font-medium mb-8">Da li ste sigurni da želite trajno da obrišete profil zaposlenog <strong>{selectedEmployee.name}</strong>?</p>
                                     <div className="flex gap-3">
-                                        <button onClick={() => setShowDeleteConfirm(false)} className="flex-1 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl transition-colors">Odustani</button>
-                                        <button onClick={handleDeleteEmployee} className="flex-1 py-3 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl transition-colors shadow-lg shadow-rose-200">Da, Obriši</button>
+                                        <button onClick={() => setShowDeleteConfirm(false)} className="flex-1 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl transition-colors tracking-wide">Odustani</button>
+                                        <button onClick={handleDeleteEmployee} className="flex-1 py-3 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl transition-colors shadow-lg shadow-rose-200 tracking-wide">Da, Obriši</button>
                                     </div>
                                 </div>
                             </div>
                         )}
                         <div className="flex justify-between items-start mb-8">
                             <div className="flex items-center gap-6">
-                                <div className="w-20 h-20 rounded-full bg-slate-100 flex items-center justify-center text-3xl font-black text-slate-400 border-4 border-slate-50 shadow-md">
+                                <div className="w-20 h-20 rounded-full bg-slate-100 flex items-center justify-center text-3xl font-black text-slate-400 border-4 border-white shadow-md relative">
                                     {selectedEmployee.name.charAt(0)}
+                                    {isBirthday(selectedEmployee.birthDate) && (
+                                        <div className="absolute -top-2 -right-2 bg-white rounded-full p-1.5 shadow-md border border-orange-100 animate-bounce">
+                                            <Cake className="w-5 h-5 text-[#d13334]" />
+                                        </div>
+                                    )}
                                 </div>
-                                <div>
-                                    <h2 className="text-2xl font-black text-slate-900">{selectedEmployee.name}</h2>
+                                <div className="flex-1">
+                                    {isEditingEmployee ? (
+                                        <input 
+                                            type="text" 
+                                            value={employeeFormData.name} 
+                                            onChange={(e) => setEmployeeFormData({...employeeFormData, name: e.target.value})}
+                                            className="text-2xl font-black text-slate-900 tracking-wide bg-slate-50 border-b-2 border-[#d13334] outline-none w-full pb-1 mb-1"
+                                        />
+                                    ) : (
+                                        <h2 className="text-2xl font-black text-slate-900 tracking-wide flex items-center gap-2">
+                                            {selectedEmployee.name}
+                                            {isBirthday(selectedEmployee.birthDate) && <span className="text-xs bg-[#d13334] text-white px-2 py-1 rounded-full animate-pulse">Srećan Rođendan! 🎉</span>}
+                                        </h2>
+                                    )}
                                     <p className="text-sm font-bold text-slate-500 flex items-center gap-2 mt-1">
                                         <Briefcase className="w-4 h-4" /> {selectedEmployee.role}
                                     </p>
@@ -542,43 +958,45 @@
                                     <div className="relative">
                                         <Wallet className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                                         {isEditingEmployee ? (
-                                            <input type="text" value={employeeFormData.salary} onChange={(e) => setEmployeeFormData({...employeeFormData, salary: e.target.value})} className="w-full pl-10 pr-4 py-3 bg-slate-50 rounded-xl border border-slate-200 font-bold focus:border-blue-500 outline-none" />
+                                            <input type="text" value={employeeFormData.salary} onChange={(e) => setEmployeeFormData({...employeeFormData, salary: e.target.value})} className="w-full pl-10 pr-4 py-3 bg-slate-50 rounded-xl border border-slate-200 font-bold focus:border-[#d13334] outline-none" />
                                         ) : (
-                                            <div className="w-full pl-10 pr-4 py-3 bg-slate-50 rounded-xl border border-slate-100 font-black text-lg">{selectedEmployee.salary}</div>
+                                            <div className="w-full pl-10 pr-4 py-3 bg-slate-50 rounded-xl border border-slate-100 font-black text-lg tracking-wide">{selectedEmployee.salary}</div>
                                         )}
                                     </div>
                                 </div>
                                 <div className="space-y-2">
                                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Datum zaposlenja</label>
                                     <div className="relative">
-                                        <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                                         {isEditingEmployee ? (
-                                            <input type="date" value={employeeFormData.startDate} onChange={(e) => setEmployeeFormData({...employeeFormData, startDate: e.target.value})} className="w-full pl-10 pr-4 py-3 bg-slate-50 rounded-xl border border-slate-200 font-bold focus:border-blue-500 outline-none" />
+                                            <input type="date" value={employeeFormData.startDate} onChange={(e) => setEmployeeFormData({...employeeFormData, startDate: e.target.value})} className="w-full pl-3" />
                                         ) : (
-                                            <div className="w-full pl-10 pr-4 py-3 bg-slate-50 rounded-xl border border-slate-100 font-bold">{calculateTenure(selectedEmployee.startDate)}</div>
+                                            <div className="w-full pl-4 pr-4 py-3 bg-slate-50 rounded-xl border border-slate-100 font-bold tracking-wide flex items-center gap-2"><Calendar className="w-4 h-4 text-slate-400"/> {formatDate(selectedEmployee.startDate)}</div>
                                         )}
                                     </div>
                                     {!isEditingEmployee && selectedEmployee.startDate && <p className="text-xs text-slate-400 font-medium px-1">U firmi: {calculateFullTenure(selectedEmployee.startDate)}</p>}
                                 </div>
+                                
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Datum Rođenja</label>
+                                    <div className="relative">
+                                        {isEditingEmployee ? (
+                                            <input type="date" value={employeeFormData.birthDate} onChange={(e) => setEmployeeFormData({...employeeFormData, birthDate: e.target.value})} className="w-full pl-3" />
+                                        ) : (
+                                            <div className="w-full pl-4 pr-4 py-3 bg-slate-50 rounded-xl border border-slate-100 font-bold tracking-wide flex items-center gap-2">
+                                                <Cake className="w-4 h-4 text-slate-400"/> {selectedEmployee.birthDate ? formatDate(selectedEmployee.birthDate) : 'Nije uneto'}
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+
                                 <div className="space-y-2">
                                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Sati (Danas)</label>
                                     <div className="relative">
                                         <Timer className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                                         {isEditingEmployee ? (
-                                            <input type="number" value={employeeFormData.hoursToday} onChange={(e) => setEmployeeFormData({...employeeFormData, hoursToday: e.target.value})} className="w-full pl-10 pr-4 py-3 bg-slate-50 rounded-xl border border-slate-200 font-bold focus:border-blue-500 outline-none" />
+                                            <input type="number" value={employeeFormData.hoursToday} onChange={(e) => setEmployeeFormData({...employeeFormData, hoursToday: e.target.value})} className="w-full pl-10 pr-4 py-3 bg-slate-50 rounded-xl border border-slate-200 font-bold focus:border-[#d13334] outline-none" />
                                         ) : (
-                                            <div className="w-full pl-10 pr-4 py-3 bg-slate-50 rounded-xl border border-slate-100 font-bold">{selectedEmployee.hoursToday}h</div>
-                                        )}
-                                    </div>
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Sati (Mesec)</label>
-                                    <div className="relative">
-                                        <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                                        {isEditingEmployee ? (
-                                            <input type="number" value={employeeFormData.hoursMonth} onChange={(e) => setEmployeeFormData({...employeeFormData, hoursMonth: e.target.value})} className="w-full pl-10 pr-4 py-3 bg-slate-50 rounded-xl border border-slate-200 font-bold focus:border-blue-500 outline-none" />
-                                        ) : (
-                                            <div className="w-full pl-10 pr-4 py-3 bg-slate-50 rounded-xl border border-slate-100 font-bold">{selectedEmployee.hoursMonth}h</div>
+                                            <div className="w-full pl-10 pr-4 py-3 bg-slate-50 rounded-xl border border-slate-100 font-bold tracking-wide">{selectedEmployee.hoursToday}h</div>
                                         )}
                                     </div>
                                 </div>
@@ -586,7 +1004,7 @@
                             <div className="space-y-2">
                                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Napomena</label>
                                 {isEditingEmployee ? (
-                                    <textarea value={employeeFormData.note} onChange={(e) => setEmployeeFormData({...employeeFormData, note: e.target.value})} className="w-full p-4 bg-slate-50 rounded-xl border border-slate-200 font-medium focus:border-blue-500 outline-none h-24 resize-none" />
+                                    <textarea value={employeeFormData.note} onChange={(e) => setEmployeeFormData({...employeeFormData, note: e.target.value})} className="w-full p-4 bg-slate-50 rounded-xl border border-slate-200 font-medium focus:border-[#d13334] outline-none h-24 resize-none" />
                                 ) : (
                                     <div className="w-full p-4 bg-slate-50 rounded-xl border border-slate-100 font-medium text-slate-600 min-h-[6rem]">{selectedEmployee.note || "Nema napomene."}</div>
                                 )}
@@ -596,10 +1014,10 @@
                                     <>
                                         <button onClick={handleSaveEmployee} className="flex-1 py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"><Check className="w-4 h-4" /> Sačuvaj Izmene</button>
                                         <button onClick={() => setShowDeleteConfirm(true)} className="px-4 py-3 bg-rose-50 text-rose-600 rounded-xl font-bold hover:bg-rose-100 transition-colors flex items-center justify-center gap-2"><Trash2 className="w-4 h-4" /></button>
-                                        <button onClick={() => setIsEditingEmployee(false)} className="px-6 py-3 bg-slate-100 text-slate-600 rounded-xl font-bold hover:bg-slate-200 transition-colors">Odustani</button>
+                                        <button onClick={() => setIsEditingEmployee(false)} className="px-6 py-3 bg-slate-100 text-slate-600 rounded-xl font-bold hover:bg-slate-200 transition-colors tracking-wide">Odustani</button>
                                     </>
                                 ) : (
-                                    <button onClick={() => setIsEditingEmployee(true)} className="w-full py-3 bg-slate-900 text-white rounded-xl font-bold hover:bg-slate-800 transition-colors flex items-center justify-center gap-2"><Edit3 className="w-4 h-4" /> Izmeni Profil</button>
+                                    <button onClick={() => setIsEditingEmployee(true)} className="w-full py-3 bg-slate-900 text-white rounded-xl font-bold hover:bg-slate-800 transition-colors flex items-center justify-center gap-2 tracking-wide"><Edit3 className="w-4 h-4" /> Izmeni Profil</button>
                                 )}
                             </div>
                         </div>
@@ -607,44 +1025,46 @@
                 </div>
               )}
 
-              <aside className={`${isDesktopSidebarOpen ? 'w-64 p-6' : 'w-20 p-4'} bg-white border-r border-slate-200 flex flex-col shrink-0 hidden md:flex z-50 h-full transition-all duration-300`}>
+              <aside className={`${isDesktopSidebarOpen ? 'w-64 p-6' : 'w-20 p-4'} bg-slate-900 border-r border-slate-800 flex flex-col shrink-0 hidden md:flex z-50 h-full transition-all duration-300`}>
                 <div className={`flex items-center justify-between mb-8 ${isDesktopSidebarOpen ? 'pl-2' : 'justify-center'}`}>
-                    {isDesktopSidebarOpen ? <PaprikaLogo /> : <span className="bg-[#d13334] text-white px-2 py-0.5 rounded-lg text-xl font-black">P</span>}
-                    {isDesktopSidebarOpen && <button onClick={() => setIsDesktopSidebarOpen(false)} className="p-1.5 hover:bg-slate-100 rounded-lg text-slate-400"><PanelLeftClose className="w-4 h-4" /></button>}
+                    {isDesktopSidebarOpen ? <PaprikaLogo subtitleColor="text-white" /> : <span className="bg-[#d13334] text-white px-2 py-0.5 rounded-lg text-xl font-black tracking-wide">P</span>}
+                    {isDesktopSidebarOpen && <button onClick={() => setIsDesktopSidebarOpen(false)} className="p-1.5 hover:bg-slate-800 rounded-lg text-slate-400"><PanelLeftClose className="w-4 h-4" /></button>}
                 </div>
                 <div className="flex-1 overflow-y-auto no-scrollbar"><NavigationContent compact={!isDesktopSidebarOpen} /></div>
-                <div className={`mt-auto pt-6 border-t border-slate-100 shrink-0 ${!isDesktopSidebarOpen ? 'flex justify-center' : ''}`}><UserProfile compact={!isDesktopSidebarOpen} /></div>
+                <div className={`mt-auto pt-6 border-t border-slate-800 shrink-0 ${!isDesktopSidebarOpen ? 'flex justify-center' : ''}`}><UserProfile compact={!isDesktopSidebarOpen} /></div>
               </aside>
 
               {isMobileSidebarOpen && (
                 <div className="fixed inset-0 z-50 md:hidden flex">
                     <div className="fixed inset-0 bg-black/20 backdrop-blur-sm" onClick={() => setIsMobileSidebarOpen(false)}></div>
-                    <aside className="w-72 bg-white h-full relative flex flex-col p-6 animate-in slide-in-from-left duration-300">
-                        <div className="flex justify-between items-center mb-8 shrink-0"><PaprikaLogo /><button onClick={() => setIsMobileSidebarOpen(false)}><X className="w-6 h-6 text-slate-400" /></button></div>
+                    <aside className="w-72 bg-slate-900 h-full relative flex flex-col p-6 animate-in slide-in-from-left duration-300">
+                        <div className="flex justify-between items-center mb-8 shrink-0"><PaprikaLogo subtitleColor="text-white" /><button onClick={() => setIsMobileSidebarOpen(false)}><X className="w-6 h-6 text-slate-400" /></button></div>
                         <div className="flex-1 overflow-y-auto"><NavigationContent /></div>
-                        <div className="mt-auto pt-6 border-t border-slate-100 shrink-0"><UserProfile /></div>
+                        <div className="mt-auto pt-6 border-t border-slate-800 shrink-0"><UserProfile /></div>
                     </aside>
                 </div>
               )}
 
               <div className="flex-1 flex flex-col h-full overflow-hidden">
-                <header className="bg-white/80 backdrop-blur-md border-b border-slate-200 sticky top-0 z-40 shrink-0">
+                <header className="bg-slate-50/80 backdrop-blur-md border-b border-slate-200 sticky top-0 z-40 shrink-0">
                   <div className="px-6 md:px-8 h-20 flex items-center justify-between">
                     <div className="flex items-center gap-4">
                       <button onClick={() => setIsMobileSidebarOpen(true)} className="md:hidden p-2 hover:bg-slate-100 rounded-xl transition-colors"><Menu className="w-6 h-6 text-slate-700" /></button>
                       {!isDesktopSidebarOpen && <button onClick={() => setIsDesktopSidebarOpen(true)} className="hidden md:block p-2 hover:bg-slate-100 rounded-xl transition-colors mr-2"><PanelLeftOpen className="w-6 h-6 text-slate-500" /></button>}
                       <div>
                         <div className="flex items-center gap-2">
-                            <h2 className="text-xl font-black text-slate-900 tracking-tight">
-                                {userRole === 'employee' ? `Dobrodošli, ${currentUserData.name.split(' ')[0]} 👋` : (activeTab === 'employees' ? 'Zaposleni' : 'Pregled Poslovanja')}
+                            <h2 className="text-xl font-black text-slate-900 tracking-tight tracking-wide">
+                                {activeTab === 'checklists' ? 'Ček Liste & Zaduženja' : 
+                                 activeTab === 'oil' ? 'Zamena Ulja' :
+                                 (userRole === 'employee' || userRole === 'lead' ? `Dobrodošli, ${currentUserData.name.split(' ')[0]} 👋` : (activeTab === 'employees' ? 'Zaposleni' : 'Pregled Poslovanja'))}
                             </h2>
-                            {userRole !== 'employee' && activeTab === 'overview' && (
+                            {(userRole === 'admin' || userRole === 'manager') && activeTab === 'overview' && (
                                 <div className="relative ml-4">
-                                    <button onClick={() => setShowLocationMenu(!showLocationMenu)} className="flex items-center gap-2 px-3 py-1.5 bg-slate-100 rounded-xl text-xs font-bold text-slate-700 hover:bg-slate-200 transition-colors"><Store className="w-4 h-4 text-slate-500" />{getSelectedLocationData().name}<ChevronDown className="w-3 h-3 text-slate-400" /></button>
+                                    <button onClick={() => setShowLocationMenu(!showLocationMenu)} className="flex items-center gap-2 px-3 py-1.5 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors tracking-wide"><Store className="w-4 h-4 text-slate-500" />{getSelectedLocationData().name}<ChevronDown className="w-3 h-3 text-slate-400" /></button>
                                     {showLocationMenu && (
                                         <div className="absolute top-full left-0 mt-2 w-64 bg-white rounded-2xl shadow-xl border border-slate-100 p-2 z-50 animate-in zoom-in-95 duration-200">
                                             {locations.map(loc => (
-                                                <button key={loc.id} onClick={() => handleLocationSelect(loc.id)} className={`w-full text-left p-2.5 rounded-xl mb-1 transition-colors ${selectedLocation === loc.id ? 'bg-blue-50 text-blue-700' : 'hover:bg-slate-50 text-slate-600'}`}><p className="text-xs font-bold">{loc.name}</p><p className="text-[10px] text-slate-400 mt-0.5 truncate">{loc.address}</p></button>
+                                                <button key={loc.id} onClick={() => handleLocationSelect(loc.id)} className={`w-full text-left p-2.5 rounded-xl mb-1 transition-colors ${selectedLocation === loc.id ? 'bg-blue-600 text-white' : 'hover:bg-slate-50 text-slate-600'}`}><p className="text-xs font-bold tracking-wide">{loc.name}</p><p className={`text-[10px] mt-0.5 truncate tracking-wide ${selectedLocation === loc.id ? 'text-white/80' : 'text-slate-400'}`}>{loc.address}</p></button>
                                             ))}
                                         </div>
                                     )}
@@ -653,14 +1073,29 @@
                         </div>
                       </div>
                     </div>
-                    {userRole !== 'employee' && activeTab !== 'employees' && (
+                    {(userRole === 'admin' || userRole === 'manager') && activeTab !== 'employees' && activeTab !== 'checklists' && activeTab !== 'oil' && (
                         <div className="flex items-center gap-3 md:gap-4">
                         <div className="relative">
-                            <button onClick={() => setShowDatePicker(!showDatePicker)} className="flex items-center gap-2 bg-slate-100 p-1 pr-3 rounded-xl border border-slate-200 hover:bg-slate-200 transition-colors">
-                                <div className="p-1.5 bg-white rounded-lg shadow-sm"><Calendar className="w-4 h-4 text-slate-600" /></div>
-                                <div className="text-left"><p className="text-[9px] font-bold text-slate-400 uppercase leading-none">Period</p><p className="text-[10px] font-black text-slate-700 uppercase leading-none mt-0.5">{formatDate(dateRange.start)} - {formatDate(dateRange.end)}</p></div>
+                            <button onClick={() => setShowDatePicker(!showDatePicker)} className="flex items-center gap-2 bg-white border border-slate-200 p-1 pr-3 rounded-xl hover:bg-slate-50 transition-colors">
+                                <div className="p-1.5 bg-slate-50 rounded-lg shadow-sm"><Calendar className="w-4 h-4 text-slate-600" /></div>
+                                <div className="text-left"><p className="text-[9px] font-bold text-slate-400 uppercase leading-none tracking-wide">Period</p><p className="text-[10px] font-black text-slate-700 uppercase leading-none mt-0.5 tracking-wide">{formatDate(dateRange.start)} - {formatDate(dateRange.end)}</p></div>
                                 <ChevronDown className="w-3 h-3 text-slate-400 ml-1" />
                             </button>
+                            {showDatePicker && (
+                                <div className="absolute top-full right-0 mt-2 w-64 bg-white rounded-2xl shadow-xl border border-slate-100 p-4 z-50 animate-in zoom-in-95 duration-200">
+                                    <div className="space-y-3">
+                                        <div className="space-y-1">
+                                            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Od Datuma</label>
+                                            <input type="date" value={dateRange.startStr} onChange={(e) => handleDateRangeChange('start', e.target.value)} className="w-full p-2 bg-slate-50 rounded-lg border border-slate-200 text-xs font-bold text-slate-700" />
+                                        </div>
+                                        <div className="space-y-1">
+                                            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Do Datuma</label>
+                                            <input type="date" value={dateRange.endStr} onChange={(e) => handleDateRangeChange('end', e.target.value)} className="w-full p-2 bg-slate-50 rounded-lg border border-slate-200 text-xs font-bold text-slate-700" />
+                                        </div>
+                                        <button onClick={() => setShowDatePicker(false)} className="w-full py-2 bg-[#d13334] text-white rounded-lg text-xs font-bold mt-2">Primeni</button>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                         </div>
                     )}
@@ -668,25 +1103,223 @@
                 </header>
 
                 <main ref={mainContentRef} className="flex-1 overflow-y-auto p-4 md:p-8 scroll-smooth">
-                  {userRole !== 'employee' && activeTab === 'overview' && (
+                  
+                  {/* --- OIL CHANGE SECTION --- */}
+                  {activeTab === 'oil' && (
+                      <div className="animate-in fade-in duration-500">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                              {Object.entries(INITIAL_OIL_DATA)
+                                .filter(([key, _]) => userRole === 'admin' || userRole === 'manager' || userRole === 'lead' || (currentUserData.location === key || (currentUserData.location === 'smash' && key === 'smash')))
+                                .map(([key, info]) => {
+                                  // Live data from state
+                                  const locationData = oilData[key];
+                                  const status = getOilStatus(locationData.lastChanged);
+                                  const lastDate = new Date(locationData.lastChanged);
+                                  const nextDate = new Date(lastDate);
+                                  nextDate.setDate(lastDate.getDate() + 7);
+
+                                  return (
+                                      <div key={key} className="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100 flex flex-col justify-between hover:shadow-md transition-all group relative overflow-hidden h-full">
+                                          {/* Decorative Background Icon */}
+                                          <div className={`absolute -top-6 -right-6 p-8 opacity-[0.03] group-hover:opacity-10 group-hover:scale-110 transition-all duration-500 pointer-events-none ${status.color}`}>
+                                              <status.icon className="w-40 h-40" />
+                                          </div>
+                                          
+                                          <div className="relative z-10 mb-6">
+                                              <div className="flex justify-between items-start mb-4">
+                                                  <div className="p-3 bg-slate-50 rounded-2xl shrink-0 border border-slate-100">
+                                                      <Store className="w-6 h-6 text-slate-400" />
+                                                  </div>
+                                                  <span className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wide whitespace-nowrap shadow-sm ${status.bg} ${status.color}`}>
+                                                      {status.text}
+                                                  </span>
+                                              </div>
+                                              <h3 className="text-xl font-black text-slate-900 tracking-wide mb-1 break-words pr-2">{locationData.name}</h3>
+                                              <p className="text-xs text-slate-400 font-bold uppercase tracking-wide">Friteza</p>
+                                          </div>
+
+                                          <div className="space-y-3 relative z-10">
+                                              <div className="flex flex-col bg-slate-50 rounded-2xl border border-slate-100 overflow-hidden">
+                                                  <div className="flex justify-between items-center p-4 border-b border-slate-200/50">
+                                                      <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Poslednja</div>
+                                                      <div className="text-sm font-bold text-slate-700 tabular-nums">{formatDate(locationData.lastChanged)}</div>
+                                                  </div>
+                                                  <div className="flex justify-between items-center p-4 bg-white/50">
+                                                      <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Sledeća</div>
+                                                      <div className={`text-sm font-bold tabular-nums ${status.status === 'ok' ? 'text-slate-700' : 'text-rose-500 animate-pulse'}`}>{formatDate(nextDate)}</div>
+                                                  </div>
+                                              </div>
+                                              
+                                              <button 
+                                                  onClick={() => handleOilChange(key)}
+                                                  className="w-full py-4 bg-[#d13334] text-white rounded-xl font-bold shadow-lg shadow-[#d13334]/20 hover:bg-[#b32b2b] hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-2 text-sm tracking-wide"
+                                              >
+                                                  <RefreshCw className="w-4 h-4" /> Evidentiraj Zamenu
+                                              </button>
+                                          </div>
+                                      </div>
+                                  );
+                              })}
+                          </div>
+                      </div>
+                  )}
+
+                  {/* --- CHECKLIST SECTION --- */}
+                  {activeTab === 'checklists' && (
+                      <div className="space-y-8 animate-in fade-in duration-500">
+                          
+                          {/* CLOCK IN STATUS CARD */}
+                          {userRole !== 'admin' && (
+                              <div className={`p-6 rounded-[2rem] border transition-all ${isClockedIn ? 'bg-white border-slate-100 shadow-sm' : 'bg-rose-50 border-rose-100'}`}>
+                                  <div className="flex items-center justify-between">
+                                      <div className="flex items-center gap-4">
+                                          <div className={`p-3 rounded-2xl ${isClockedIn ? 'bg-emerald-50 text-emerald-600' : 'bg-white text-rose-500'}`}>
+                                              <Clock className="w-6 h-6" />
+                                          </div>
+                                          <div>
+                                              <h3 className="text-lg font-black text-slate-900 tracking-wide">Status Smene</h3>
+                                              <p className="text-sm font-medium text-slate-500">{isClockedIn ? 'Aktivna smena - Možete popunjavati liste' : 'Niste prijavljeni - Prijavite se za pristup'}</p>
+                                          </div>
+                                      </div>
+                                      {!isClockedIn && (
+                                          <button onClick={() => setIsClockedIn(true)} className="px-6 py-3 bg-[#d13334] text-white rounded-xl font-bold shadow-lg shadow-[#d13334]/20 hover:scale-105 transition-all">
+                                              Započni Smenu
+                                          </button>
+                                      )}
+                                  </div>
+                              </div>
+                          )}
+
+                          {/* ACTION BUTTONS (FOR EMPLOYEES & LEADS/MANAGERS) */}
+                          {userRole !== 'admin' && (
+                              <div className={`grid grid-cols-1 md:grid-cols-2 gap-6 ${!isClockedIn ? 'opacity-50 pointer-events-none' : ''}`}>
+                                  {Object.values(CHECKLIST_TEMPLATES).map((template) => (
+                                      <button key={template.id} onClick={() => openChecklist(template.id)} className="group bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100 hover:shadow-md transition-all text-left flex items-start gap-4">
+                                          <div className={`p-4 rounded-2xl ${template.bgColor} ${template.color} group-hover:scale-110 transition-transform`}>
+                                              <template.icon className="w-8 h-8" />
+                                          </div>
+                                          <div>
+                                              <h3 className="text-xl font-black text-slate-900 tracking-wide mb-1">{template.title}</h3>
+                                              <p className="text-sm text-slate-500 font-medium">Klikni za popunjavanje</p>
+                                          </div>
+                                      </button>
+                                  ))}
+                              </div>
+                          )}
+
+                          {/* LOGS TABLE (VISIBLE TO ALL, BUT MAINLY ADMIN/LEAD) */}
+                          <div className="bg-white rounded-[2rem] shadow-sm border border-slate-100 overflow-hidden">
+                              <div className="p-6 border-b border-slate-50 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                                  <div className="flex flex-col gap-1">
+                                      <h3 className="text-lg font-black text-slate-900 tracking-wide">Istorija Popunjavanja</h3>
+                                      <p className="text-xs text-slate-400 font-bold uppercase tracking-wide">Pregled urađenih lista</p>
+                                  </div>
+                                  
+                                  <div className="flex flex-col md:flex-row items-start md:items-center gap-4 w-full md:w-auto">
+                                      {/* DATE FILTER */}
+                                      <div className="relative">
+                                          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                              <CalendarDays className="h-4 w-4 text-slate-400" />
+                                          </div>
+                                          <input 
+                                              type="date" 
+                                              value={checklistDateFilter}
+                                              onChange={(e) => setChecklistDateFilter(e.target.value)}
+                                              className="pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 hover:bg-white focus:bg-white transition-all shadow-sm outline-none focus:border-[#d13334]"
+                                          />
+                                      </div>
+
+                                      {/* LOCATION FILTER (ADMIN/LEAD) */}
+                                      {userRole !== 'employee' && (
+                                          <div className="flex gap-2 bg-slate-50 p-1 rounded-xl overflow-x-auto max-w-full">
+                                              {checklistLocations.map((loc) => (
+                                                  <button 
+                                                      key={loc} 
+                                                      onClick={() => setChecklistLocationFilter(loc)}
+                                                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${checklistLocationFilter === loc ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+                                                  >
+                                                      {loc}
+                                                  </button>
+                                              ))}
+                                          </div>
+                                      )}
+                                  </div>
+                              </div>
+                              <div className="overflow-x-auto">
+                                  <table className="w-full text-left text-sm">
+                                      <thead>
+                                          <tr className="bg-slate-50/50 text-slate-400 uppercase tracking-wider text-[10px] font-black border-b border-slate-50">
+                                              <th className="px-6 py-4">Zaposleni</th>
+                                              <th className="px-6 py-4">Tip Liste</th>
+                                              <th className="px-6 py-4">Vreme</th>
+                                              <th className="px-6 py-4 text-center">Popunjenost</th>
+                                              <th className="px-6 py-4 text-right">Status</th>
+                                              <th className="px-6 py-4 text-center">Detalji</th>
+                                          </tr>
+                                      </thead>
+                                      <tbody className="divide-y divide-slate-50">
+                                          {getFilteredLogs().length > 0 ? (
+                                              getFilteredLogs().map((log) => (
+                                                  <tr key={log.id} onClick={() => setViewLog(log)} className="hover:bg-slate-50/50 transition-colors cursor-pointer group">
+                                                      <td className="px-6 py-4 font-bold text-slate-700">{log.employee}</td>
+                                                      <td className="px-6 py-4 text-slate-600 flex items-center gap-2">
+                                                          {log.type.includes('Pića') ? <Beer className="w-4 h-4 text-orange-400"/> : <Thermometer className="w-4 h-4 text-blue-400"/>}
+                                                          {log.type}
+                                                      </td>
+                                                      <td className="px-6 py-4 text-slate-500 font-medium">{log.date}</td>
+                                                      <td className="px-6 py-4">
+                                                          <div className="w-full bg-slate-100 rounded-full h-2 max-w-[100px] mx-auto overflow-hidden">
+                                                              <div className={`h-full rounded-full ${log.percentage === 100 ? 'bg-emerald-500' : 'bg-orange-400'}`} style={{width: `${log.percentage}%`}}></div>
+                                                          </div>
+                                                          <p className="text-[10px] text-center mt-1 text-slate-400 font-bold">{log.percentage}%</p>
+                                                      </td>
+                                                      <td className="px-6 py-4 text-right">
+                                                          <span className={`px-2 py-1 rounded-lg text-[10px] font-black uppercase tracking-wide ${log.status === 'Završeno' ? 'bg-emerald-50 text-emerald-600' : 'bg-orange-50 text-orange-600'}`}>
+                                                              {log.status}
+                                                          </span>
+                                                      </td>
+                                                      <td className="px-6 py-4 text-center">
+                                                          <div className="p-2 rounded-full hover:bg-slate-100 inline-flex text-slate-300 group-hover:text-blue-500 transition-colors">
+                                                              <Eye className="w-4 h-4" />
+                                                          </div>
+                                                      </td>
+                                                  </tr>
+                                              ))
+                                          ) : (
+                                              <tr>
+                                                  <td colSpan="6" className="px-6 py-12 text-center text-slate-400 text-sm font-medium flex flex-col items-center justify-center gap-2">
+                                                      <div className="p-3 bg-slate-50 rounded-full"><CalendarDays className="w-6 h-6 text-slate-300"/></div>
+                                                      Nema zapisa za izabrani datum ili lokaciju.
+                                                  </td>
+                                              </tr>
+                                          )}
+                                      </tbody>
+                                  </table>
+                              </div>
+                          </div>
+                      </div>
+                  )}
+
+                  {/* ADMIN & MANAGER DASHBOARD */}
+                  {(userRole === 'admin' || userRole === 'manager') && activeTab === 'overview' && (
                     <div className="flex flex-col xl:flex-row gap-8 h-full">
                         <div className="flex-1 space-y-8 min-w-0">
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
                                 <div className="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100 flex flex-col justify-between hover:shadow-md transition-all group relative h-full">
-                                    <div className="flex justify-between items-start relative z-10"><div className="p-3 rounded-2xl bg-blue-50 text-blue-600"><DollarSign className="w-6 h-6" /></div><div className="flex items-center gap-1 text-sm font-bold text-rose-500"><ArrowDownRight className="w-4 h-4" />22.5%</div></div>
-                                    <div className="mt-6 relative z-10"><p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Prihod</p><h3 className="text-xl font-black text-slate-900 tracking-tight">{formatCurrency(data.revenue)}</h3><p className="text-[9px] text-slate-400 font-bold mt-1 uppercase tracking-tight">Ukupno Bruto</p></div>
+                                    <div className="flex justify-between items-start relative z-10"><div className="p-3 rounded-2xl bg-blue-50 text-blue-600"><DollarSign className="w-6 h-6" /></div><div className="flex items-center gap-1 text-sm font-bold text-emerald-500 tracking-wide"><ArrowUpRight className="w-4 h-4" />22.5%</div></div>
+                                    <div className="mt-6 relative z-10"><p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Prihod</p><h3 className="text-xl font-black text-slate-900 tracking-tight tracking-wide">{formatCurrency(data.revenue)}</h3><p className="text-[9px] text-slate-400 font-bold mt-1 uppercase tracking-tight tracking-wide">Ukupno Bruto</p></div>
                                 </div>
                                 <div className="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100 flex flex-col justify-between hover:shadow-md transition-all group relative h-full">
                                     <div className="flex justify-between items-start relative z-10"><div className="p-3 rounded-2xl bg-purple-50 text-purple-600"><Users className="w-6 h-6" /></div></div>
-                                    <div className="mt-6 relative z-10"><p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Radna Snaga</p><h3 className="text-xl font-black text-slate-900 tracking-tight">{formatCurrency(data.laborCost)}</h3><p className="text-[9px] text-slate-400 font-bold mt-1 uppercase tracking-tight">20% učešća</p></div>
+                                    <div className="mt-6 relative z-10"><p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Radna Snaga</p><h3 className="text-xl font-black text-slate-900 tracking-tight tracking-wide">{formatCurrency(data.laborCost)}</h3><p className="text-[9px] text-slate-400 font-bold mt-1 uppercase tracking-tight tracking-wide">20% učešća</p></div>
                                 </div>
                                 <div className="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100 flex flex-col justify-between hover:shadow-md transition-all group relative h-full">
                                     <div className="flex justify-between items-start relative z-10"><div className="p-3 rounded-2xl bg-slate-50 text-slate-500"><TrendingDown className="w-6 h-6" /></div></div>
-                                    <div className="mt-6 relative z-10"><p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Troškovi</p><h3 className="text-xl font-black text-slate-900 tracking-tight">{formatCurrency(data.totalCosts)}</h3><p className="text-[9px] text-slate-400 font-bold mt-1 uppercase tracking-tight">97.2% udeo</p></div>
+                                    <div className="mt-6 relative z-10"><p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Troškovi</p><h3 className="text-xl font-black text-slate-900 tracking-tight tracking-wide">{formatCurrency(data.totalCosts)}</h3><p className="text-[9px] text-slate-400 font-bold mt-1 uppercase tracking-tight tracking-wide">97.2% udeo</p></div>
                                 </div>
                                 <div className="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100 flex flex-col justify-between hover:shadow-md transition-all group relative h-full">
-                                    <div className="flex justify-between items-start relative z-10"><div className="p-3 rounded-2xl bg-emerald-50 text-emerald-600"><TrendingUp className="w-6 h-6" /></div><div className="flex items-center gap-1 text-sm font-bold text-emerald-500"><ArrowUpRight className="w-4 h-4" />Pozitivan</div></div>
-                                    <div className="mt-6 relative z-10"><p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Profit</p><h3 className="text-xl font-black text-slate-900 tracking-tight">760.190 RSD</h3><p className="text-[9px] text-slate-400 font-bold mt-1 uppercase tracking-tight">Operativni Rezultat</p></div>
+                                    <div className="flex justify-between items-start relative z-10"><div className="p-3 rounded-2xl bg-emerald-50 text-emerald-600"><TrendingUp className="w-6 h-6" /></div><div className="flex items-center gap-1 text-sm font-bold text-emerald-500 tracking-wide"><ArrowUpRight className="w-4 h-4" />Pozitivan</div></div>
+                                    <div className="mt-6 relative z-10"><p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Profit</p><h3 className="text-xl font-black text-slate-900 tracking-tight tracking-wide">760.190 RSD</h3><p className="text-[9px] text-slate-400 font-bold mt-1 uppercase tracking-tight tracking-wide">Operativni Rezultat</p></div>
                                 </div>
                             </div>
 
@@ -714,7 +1347,7 @@
                         <aside className="w-full xl:w-80 shrink-0 flex flex-col gap-6">
                             <div className="bg-white rounded-[2rem] shadow-sm border border-slate-100 flex flex-col overflow-hidden h-[500px] xl:h-auto xl:flex-1">
                                 <div className="p-5 border-b border-slate-50 bg-slate-50/50 flex items-center justify-between">
-                                    <div className="flex items-center gap-3"><div className="p-2 bg-white rounded-xl shadow-sm"><Bot className="w-5 h-5 text-blue-600" /></div><span className="text-sm font-bold text-slate-700">AI Konsultant</span></div>
+                                    <div className="flex items-center gap-3"><div className="p-2 bg-white rounded-xl shadow-sm"><Bot className="w-5 h-5 text-blue-600" /></div><span className="text-sm font-bold text-slate-700 tracking-wide">AI Konsultant</span></div>
                                     <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span>
                                 </div>
                                 <div className="flex-1 p-4 overflow-y-auto space-y-4 bg-[#f8fafc]">
@@ -732,31 +1365,42 @@
                     </div>
                   )}
 
-                  {userRole !== 'employee' && activeTab === 'employees' && (
+                  {/* ADMIN & MANAGER EMPLOYEES LIST */}
+                  {(userRole === 'admin' || userRole === 'manager') && activeTab === 'employees' && (
                      <div className="space-y-8 animate-in fade-in duration-500">
-                        <div className="flex flex-wrap gap-4">
-                          {['paprika', 'gyros', 'radionica', 'burgeri', 'hangar'].map((locId) => {
-                             const loc = employeesDb[locId];
-                             const isSelected = selectedEmployeeLocation === locId;
-                             return (
-                               <button key={locId} onClick={() => setSelectedEmployeeLocation(locId)} className={`flex-1 min-w-[200px] p-4 rounded-2xl border transition-all text-left group relative overflow-hidden ${isSelected ? 'bg-slate-900 text-white border-slate-900 shadow-lg' : 'bg-white text-slate-600 border-slate-100 hover:border-slate-300'}`}>
-                                  <div className="relative z-10"><h4 className="font-black text-lg mb-1">{loc.name}</h4><p className={`text-[10px] font-bold uppercase tracking-wide ${isSelected ? 'text-slate-400' : 'text-slate-400'}`}>{loc.address}</p></div>
-                                  {isSelected && <div className="absolute top-0 right-0 w-24 h-24 bg-white/5 rounded-full blur-2xl -mr-8 -mt-8"></div>}
-                               </button>
-                             );
-                          })}
+                        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                            <div className="flex flex-wrap gap-4 flex-1">
+                              {['paprika', 'gyros', 'radionica', 'burgeri', 'hangar'].map((locId) => {
+                                 const loc = employeesDb[locId];
+                                 const isSelected = selectedEmployeeLocation === locId;
+                                 return (
+                                   <button key={locId} onClick={() => setSelectedEmployeeLocation(locId)} className={`min-w-[120px] p-4 rounded-2xl border transition-all text-left group relative overflow-hidden ${isSelected ? 'bg-slate-900 text-white border-slate-900 shadow-lg' : 'bg-white text-slate-600 border-slate-100 hover:border-slate-300'}`}>
+                                      <div className="relative z-10"><h4 className="font-black text-sm mb-1 tracking-wide">{loc.name}</h4></div>
+                                      {isSelected && <div className="absolute top-0 right-0 w-16 h-16 bg-white/10 rounded-full blur-xl -mr-6 -mt-6"></div>}
+                                   </button>
+                                 );
+                              })}
+                            </div>
+                            <button onClick={() => setShowAddEmployeeModal(true)} className="px-6 py-4 bg-[#d13334] text-white rounded-2xl font-black text-sm shadow-xl shadow-[#d13334]/20 hover:scale-105 transition-all flex items-center gap-2 tracking-wide whitespace-nowrap">
+                                <Plus className="w-5 h-5" /> Dodaj Zaposlenog
+                            </button>
                         </div>
+
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                            {employeesDb[selectedEmployeeLocation].staff.map((employee, i) => (
-                              <div key={i} onClick={() => handleEmployeeClick(employee)} className="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100 hover:shadow-md transition-all group cursor-pointer hover:border-blue-200">
-                                 <div className="flex justify-between items-start mb-4">
+                              <div key={i} onClick={() => handleEmployeeClick(employee)} className="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100 hover:shadow-md transition-all group cursor-pointer hover:border-blue-200 relative overflow-hidden">
+                                 {isBirthday(employee.birthDate) && <div className="absolute top-0 right-0 p-4 opacity-10"><Cake className="w-24 h-24 text-orange-500" /></div>}
+                                 <div className="flex justify-between items-start mb-4 relative z-10">
                                     <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center text-lg font-black text-slate-500 border-4 border-white shadow-sm">{employee.name.charAt(0)}</div>
                                     <span className={`text-[10px] font-black px-2 py-1 rounded-lg uppercase tracking-wide ${getRoleColor(employee.role)}`}>{employee.role}</span>
                                  </div>
-                                 <div>
-                                    <h3 className="text-xl font-black text-slate-900 mb-1">{employee.name}</h3>
-                                    <div className="flex items-center gap-2 text-sm font-bold text-slate-500 mb-4"><Wallet className="w-4 h-4" /> {typeof employee.salary === 'number' ? formatCurrency(employee.salary) : employee.salary}</div>
-                                    <div className="p-3 bg-blue-50 rounded-xl border border-blue-100"><p className="text-[10px] font-bold text-blue-700 flex items-center gap-1.5"><Calendar className="w-3 h-3" /> {calculateTenure(employee.startDate)}</p></div>
+                                 <div className="relative z-10">
+                                    <h3 className="text-xl font-black text-slate-900 mb-1 tracking-wide flex items-center gap-2">
+                                        {employee.name} 
+                                        {isBirthday(employee.birthDate) && <Cake className="w-4 h-4 text-[#d13334] animate-bounce" />}
+                                    </h3>
+                                    <div className="flex items-center gap-2 text-sm font-bold text-slate-500 mb-4 tracking-wide"><Wallet className="w-4 h-4" /> {typeof employee.salary === 'number' ? formatCurrency(employee.salary) : employee.salary}</div>
+                                    <div className="p-3 bg-blue-50 rounded-xl border border-blue-100"><p className="text-[10px] font-bold text-blue-700 flex items-center gap-1.5 tracking-wide"><Calendar className="w-3 h-3" /> {calculateTenure(employee.startDate)}</p></div>
                                  </div>
                               </div>
                            ))}
@@ -764,29 +1408,38 @@
                      </div>
                   )}
 
-                  {userRole === 'employee' && currentUserData && (
+                  {/* EMPLOYEE & TEAM LEADER DASHBOARD */}
+                  {(userRole === 'employee' || userRole === 'lead') && activeTab !== 'checklists' && currentUserData && (
                     <div className="max-w-7xl mx-auto space-y-8 animate-in fade-in duration-500">
                         <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100 flex flex-col md:flex-row items-center gap-8 relative overflow-hidden">
                             <div className="absolute top-0 right-0 p-8 opacity-5"><UserCheck className="w-64 h-64 text-slate-900" /></div>
                             <div className="w-24 h-24 rounded-full bg-slate-100 flex items-center justify-center text-3xl font-black text-slate-400 border-4 border-white shadow-lg relative z-10">{currentUserData.name.charAt(0)}</div>
                             <div className="flex-1 text-center md:text-left relative z-10">
-                                <h2 className="text-3xl font-black text-slate-900 mb-1">{currentUserData.name}</h2>
-                                <div className="flex items-center justify-center md:justify-start gap-4 text-sm font-bold text-slate-500"><span className="flex items-center gap-1.5"><Briefcase className="w-4 h-4" /> {currentUserData.roleLabel}</span><span className="w-1 h-1 bg-slate-300 rounded-full"></span><span className="flex items-center gap-1.5"><Clock className="w-4 h-4" /> {currentUserData.tenure}</span></div>
+                                <h2 className="text-3xl font-black text-slate-900 mb-1 tracking-wide">{currentUserData.name}</h2>
+                                <div className="flex items-center justify-center md:justify-start gap-4 text-sm font-bold text-slate-500 tracking-wide"><span className="flex items-center gap-1.5"><Briefcase className="w-4 h-4" /> {currentUserData.roleLabel}</span><span className="w-1 h-1 bg-slate-300 rounded-full"></span><span className="flex items-center gap-1.5"><Clock className="w-4 h-4" /> {currentUserData.tenure}</span></div>
                             </div>
+                            
+                            {/* DUGME ZA TEAM LEADERA */}
+                            {userRole === 'lead' && (
+                                <button onClick={() => setShowActionModal(true)} className="relative z-10 px-8 py-4 bg-[#d13334] text-white rounded-2xl font-black text-lg shadow-xl shadow-[#d13334]/20 hover:scale-105 transition-all flex items-center gap-3 tracking-wide">
+                                    <Plus className="w-6 h-6" /> DODAJ AKCIJU
+                                </button>
+                            )}
+
                             <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 text-center relative z-10 min-w-[180px]">
                                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Mesečni Bonus</p>
-                                <div className="text-2xl font-black text-emerald-600 flex items-center justify-center gap-2"><Award className="w-6 h-6" /> {formatCurrency(currentUserData.currentBonus)}</div>
+                                <div className="text-2xl font-black text-emerald-600 flex items-center justify-center gap-2 tracking-wide"><Award className="w-6 h-6" /> {formatCurrency(currentUserData.currentBonus)}</div>
                             </div>
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 h-96 md:h-80">
                             <div className="md:col-span-1 h-full"><LiveEarningsWidget monthlySalary={currentUserData.monthlySalary} checkInTime={currentUserData.checkInTime} /></div>
                             <div className="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100 flex flex-col justify-between h-full relative overflow-hidden group">
                                 <div className="flex justify-between items-start relative z-10"><div className="p-3 rounded-2xl bg-blue-50 text-blue-600"><Timer className="w-6 h-6" /></div></div>
-                                <div className="space-y-6 relative z-10"><div><p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Radno vreme danas</p><h3 className="text-3xl font-black text-slate-900">{currentUserData.hoursToday}h</h3></div><div><p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Ukupno ovaj mesec</p><h3 className="text-3xl font-black text-slate-900">{currentUserData.hoursMonth}h</h3></div></div>
+                                <div className="space-y-6 relative z-10"><div><p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Radno vreme danas</p><h3 className="text-3xl font-black text-slate-900 tracking-wide">{currentUserData.hoursToday}h</h3></div><div><p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Ukupno ovaj mesec</p><h3 className="text-3xl font-black text-slate-900 tracking-wide">{currentUserData.hoursMonth}h</h3></div></div>
                                 <div className="absolute -bottom-4 -right-4 opacity-[0.05] group-hover:scale-110 transition-transform"><Clock className="w-32 h-32 text-blue-900" /></div>
                             </div>
                             <div className="bg-slate-900 p-8 rounded-[2rem] text-white shadow-xl flex flex-col justify-between h-full relative overflow-hidden">
-                                <div className="relative z-10"><div className="flex items-center gap-3 mb-6"><div className="p-2 bg-white/10 rounded-xl"><Calendar className="w-5 h-5 text-white" /></div><h4 className="font-bold">Tvoja Smena</h4></div><div className="space-y-4"><div className="flex justify-between items-center pb-4 border-b border-white/10"><span className="text-slate-400 text-xs font-bold">Početak</span><span className="text-xl font-black">08:00</span></div><div className="flex justify-between items-center"><span className="text-slate-400 text-xs font-bold">Kraj</span><span className="text-xl font-black">16:00</span></div></div></div>
+                                <div className="relative z-10"><div className="flex items-center gap-3 mb-6"><div className="p-2 bg-white/10 rounded-xl"><Calendar className="w-5 h-5 text-white" /></div><h4 className="font-bold tracking-wide">Tvoja Smena</h4></div><div className="space-y-4"><div className="flex justify-between items-center pb-4 border-b border-white/10"><span className="text-slate-400 text-xs font-bold tracking-wide">Početak</span><span className="text-xl font-black tracking-wide">08:00</span></div><div className="flex justify-between items-center"><span className="text-slate-400 text-xs font-bold tracking-wide">Kraj</span><span className="text-xl font-black tracking-wide">16:00</span></div></div></div>
                                 <div className="relative z-10 mt-6 pt-4 border-t border-white/10 text-center"><p className="text-[10px] font-bold text-emerald-400 uppercase tracking-widest animate-pulse">● Trenutno aktivan</p></div>
                                 <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full blur-3xl"></div>
                             </div>
